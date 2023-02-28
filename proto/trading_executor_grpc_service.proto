@@ -1,0 +1,159 @@
+syntax = "proto3";
+package trading_executor;
+
+enum TradingExecutorOperationsCodes{
+    Ok = 0;
+    DayOff = 1;
+    OperationIsTooLow = 2;
+    OperationIsTooHigh = 3;
+    MinOperationsByInstrumentViolated = 4;
+    MaxOperationsByInstrumentViolated = 5;
+    NotEnoughBalance = 6;
+    NoLiquidity = 7;
+    PositionNotFound = 8;
+    TpIsTooClose = 9;
+    SlIsTooClose = 10;
+    AccountNotFound = 11;
+    InstrumentNotFound = 12;
+    InstrumentIsNotTradable = 13;
+    HitMaxAmountOfPendingOrders = 14;
+    TechError = 15;
+    MultiplierIsNotFound = 16;
+    TradingDisabled = 17;
+    MaxPositionsAmount = 18;
+    TradingGroupNotFound = 19;
+    TradingProfileNotFound =20;
+    TradingProfileInstrumentNotFound = 21;
+}
+
+enum TradingExecutorClosePositionReason{
+    ClientCommand = 0;
+    StopOut = 1;
+    TakeProfit = 2;
+    StopLoss = 3;
+    ForceClose = 4;
+}
+
+enum TradingExecutorPositionSide{
+    Buy = 0;
+    Sell = 1;
+}
+
+message TradingExecutorBidAsk{
+    string AssetPair = 1;
+    double Bid = 2;
+    double Ask = 3;
+    uint64 DateTimeUnixTimestampMilis = 4;
+}
+
+message TradingExecutorOpenPositionGrpcRequest{
+    string AssetPair = 1;
+    TradingExecutorPositionSide Side = 2;
+    double InvestAmount = 3;
+    int32 Leverage = 4;
+    string ProcessId = 5;
+    optional double TpInProfit = 6;
+    optional double SlInProfit = 7;
+    optional double TpInAssetPrice = 8;
+    optional double SlInAssetPrice = 9;
+    string AccountId = 10;
+    string TraderId = 11;
+}
+
+message TradingExecutorActivePositionGrpcModel{
+    string Id = 1;
+    string AssetPair = 2;
+    TradingExecutorPositionSide Side = 3;
+    double InvestAmount = 4;
+    double Leverage = 5;
+    double StopOutPercent = 6;
+    string CreateProcessId = 7;
+    uint64 CreateDateUnixTimestampMilis = 8;
+    string LastUpdateProcessId = 9;
+    uint64 LastUpdateDate = 11;
+    optional double TpInProfit = 12;
+    optional double SlInProfit = 13;
+    optional double TpInAssetPrice = 14;
+    optional double SlInAssetPrice = 15;
+    double OpenPrice = 16;
+    TradingExecutorBidAsk OpenBidAsk = 17;
+    string OpenProcessId = 18;
+    uint64 OpenDate = 19;
+    double Profit = 20;
+}
+
+message TradingExecutorOpenPositionGrpcResponse{
+    TradingExecutorOperationsCodes Status = 1;
+    optional TradingExecutorActivePositionGrpcModel Positon = 2;
+}
+
+message TradingExecutorClosePositionGrpcRequest{
+    string PositionId = 1;
+    string ProcessId = 2;
+    string AccountId = 3;
+    string TraderId = 4;
+}
+
+message TradingExecutorClosedPositionGrpcModel{
+    string Id = 1;
+    string AssetPair = 2;
+    TradingExecutorPositionSide Side = 3;
+    double InvestAmount = 4;
+    double Leverage = 5;
+    double StopOutPercent = 6;
+    string CreateProcessId = 7;
+    uint64 CreateDateUnixTimestampMilis = 8;
+    string LastUpdateProcessId = 9;
+    uint64 LastUpdateDate = 11;
+    optional double TpInProfit = 12;
+    optional double SlInProfit = 13;
+    optional double TpInAssetPrice = 14;
+    optional double SlInAssetPrice = 15;
+    double OpenPrice = 16;
+    TradingExecutorBidAsk OpenBidAsk = 17;
+    string OpenProcessId = 18;
+    uint64 OpenDate = 19;
+    double Profit = 20;
+    double ClosePrice = 21;
+    TradingExecutorBidAsk CloseBidAsk = 22;
+    string CloseProcessId = 23;
+    TradingExecutorClosePositionReason CloseReason = 24;
+}
+
+message TradingExecutorClosePositionGrpcResponse{
+    TradingExecutorOperationsCodes Status = 1;
+    optional TradingExecutorClosedPositionGrpcModel Position = 2;
+}
+
+message TradingExecutorGetActivePositionsGrpcRequest{
+    string TraderId = 1;
+    string AccountId = 2;
+    string PositionId = 3;
+    string TpInProfit = 4;
+    string SlInProfit = 5;
+    string TpInAssetPrice = 6;
+    string SlInAssetPrice = 7;
+}
+
+message TradingExecutorUpdateSlTpGrpcRequest{
+    string PositionId = 1;
+    string AccountId = 3;
+    string TraderId = 4;
+    optional double TpInProfit = 5;
+    optional double SlInProfit = 6;
+    optional double TpInAssetPrice = 7;
+    optional double SlInAssetPrice = 8;
+    double ProcessId = 9;
+}
+
+message TradingExecutorUpdateSlTpGrpcResponse{
+    TradingExecutorOperationsCodes Status = 1;
+    optional TradingExecutorActivePositionGrpcModel Position = 2;
+}
+
+service TradingExecutorGrpcService {
+    rpc OpenPosition(TradingExecutorOpenPositionGrpcRequest) returns (TradingExecutorOpenPositionGrpcResponse);
+    rpc ClosePosition(TradingExecutorClosePositionGrpcRequest) returns (TradingExecutorClosePositionGrpcResponse);
+    rpc GetAccountActivePositions(TradingExecutorGetActivePositionsGrpcRequest) returns (stream TradingExecutorActivePositionGrpcModel);
+    rpc UpdateSlTp(TradingExecutorUpdateSlTpGrpcRequest) returns (TradingExecutorUpdateSlTpGrpcResponse);
+ }

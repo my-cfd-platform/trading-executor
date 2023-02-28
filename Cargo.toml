@@ -1,0 +1,30 @@
+[package]
+name = "trading-executor"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tonic = { version = "*", features = ["tls", "tls-roots", "prost"] }
+chrono = "*"
+prost = "*"
+prost-types = "*"
+uuid = { version = "*", features = ["v4"] }
+my-grpc-extensions = { tag = "0.3.0", git = "https://github.com/MyJetTools/my-grpc-extensions.git" }
+tokio = "*"
+rust-extensions = { tag = "0.1.3", git = "https://github.com/MyJetTools/rust-extensions.git" }
+my-settings-reader = { tag = "0.1.5", git = "https://github.com/MyJetTools/my-settings-reader.git", features = [
+    "background-reader",
+] }
+flurl = { tag = "0.2.3", git = "https://github.com/MyJetTools/fl-url.git" }
+my-no-sql-tcp-reader = { tag = "0.1.8", git = "https://github.com/MyJetTools/my-no-sql-tcp-reader.git" }
+my-no-sql-data-writer = { tag = "0.1.6", git = "https://github.com/MyJetTools/my-no-sql-data-writer.git" }
+my-nosql-contracts = {path = "/Users/hays/develop/cfd/my-nosql-contracts"}
+serde = "*"
+serde_json = "*"
+serde_yaml = "*"
+serde_derive = "*"
+async-trait = "*"
+[build-dependencies]
+tonic-build = { version = "0.8.4", features = ["prost"] }
