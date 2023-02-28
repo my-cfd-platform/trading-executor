@@ -20,7 +20,7 @@ my-settings-reader = { tag = "0.1.5", git = "https://github.com/MyJetTools/my-se
 flurl = { tag = "0.2.3", git = "https://github.com/MyJetTools/fl-url.git" }
 my-no-sql-tcp-reader = { tag = "0.1.8", git = "https://github.com/MyJetTools/my-no-sql-tcp-reader.git" }
 my-no-sql-data-writer = { tag = "0.1.6", git = "https://github.com/MyJetTools/my-no-sql-data-writer.git" }
-my-nosql-contracts = {path = "/Users/hays/develop/cfd/my-nosql-contracts"}
+my-nosql-contracts = { tag = "0.1.0", git = "https://github.com/my-cfd-platform/my-nosql-contracts.git" }
 serde = "*"
 serde_json = "*"
 serde_yaml = "*"
