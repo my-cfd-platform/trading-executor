@@ -1,13 +1,13 @@
 use std::pin::Pin;
 
 use crate::{
-    map_error_to_grpc_status, open_position,
+    open_position,
     trading_executor_grpc::{
         trading_executor_grpc_service_server::TradingExecutorGrpcService,
         TradingExecutorActivePositionGrpcModel, TradingExecutorClosePositionGrpcRequest,
         TradingExecutorClosePositionGrpcResponse, TradingExecutorGetActivePositionsGrpcRequest,
         TradingExecutorOpenPositionGrpcRequest, TradingExecutorOpenPositionGrpcResponse,
-        TradingExecutorUpdateSlTpGrpcRequest, TradingExecutorUpdateSlTpGrpcResponse,
+        TradingExecutorUpdateSlTpGrpcRequest, TradingExecutorUpdateSlTpGrpcResponse, TradingExecutorOperationsCodes,
     },
     GrpcService,
 };
@@ -37,10 +37,12 @@ impl TradingExecutorGrpcService for GrpcService {
                 status: 0,
                 positon: Some(position),
             },
-            Err(error) => TradingExecutorOpenPositionGrpcResponse {
-                status: map_error_to_grpc_status(&error),
+            Err(error) => {
+                let error: TradingExecutorOperationsCodes = error.into();
+                TradingExecutorOpenPositionGrpcResponse {
+                status: error.into(),
                 positon: None,
-            },
+            }},
         };
 
         Ok(tonic::Response::new(response))
