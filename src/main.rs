@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
-use trading_executor::{start_grpc_server, AppContext, SettingsModel};
+use trading_executor::{start_grpc_server, AppContext, SettingsReader};
 
 #[tokio::main]
 async fn main() {
-    let settings_reader = SettingsModel::load(".my-cfd").await;
-    let settings_reader = Arc::new(settings_reader);
+    let settings_reader = SettingsReader::new(".my-cfd").await;
+    let settings_reader = Arc::new(settings_reader.get_settings().await);
 
     let app = AppContext::new(settings_reader.clone()).await;
 
