@@ -68,7 +68,7 @@ message PositionManagerActivePositionGrpcModel{
 
 message PositionManagerOpenPositionGrpcResponse{
     PositionManagerOperationsCodes Status = 1;
-    optional PositionManagerActivePositionGrpcModel Positon = 2;
+    optional PositionManagerActivePositionGrpcModel Position = 2;
 }
 
 message PositionManagerClosePositionGrpcRequest{
@@ -112,11 +112,6 @@ message PositionManagerClosePositionGrpcResponse{
 message PositionManagerGetActivePositionsGrpcRequest{
     string TraderId = 1;
     string AccountId = 2;
-    string PositionId = 3;
-    string TpInProfit = 4;
-    string SlInProfit = 5;
-    string TpInAssetPrice = 6;
-    string SlInAssetPrice = 7;
 }
 
 message PositionManagerUpdateSlTpGrpcRequest{

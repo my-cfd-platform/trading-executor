@@ -6,6 +6,7 @@ use tonic::transport::Channel;
 use crate::{
     position_manager_grpc::{
         position_manager_grpc_service_client::PositionManagerGrpcServiceClient,
+        PositionManagerActivePositionGrpcModel, PositionManagerGetActivePositionsGrpcRequest,
         PositionManagerOpenPositionGrpcRequest, PositionManagerUpdateSlTpGrpcRequest,
         PositionManagerUpdateSlTpGrpcResponse,
     },
@@ -61,11 +62,34 @@ impl PositionManagerGrpcClient {
             .unwrap()
             .into_inner();
 
-        if let Some(position) = response.positon {
+        if let Some(position) = response.position {
             return Ok(position.into());
         }
 
         return Err(TradingExecutorError::from(response.status));
+    }
+
+    pub async fn get_active_positions(
+        &self,
+        trader_id: &str,
+        account_id: &str,
+    ) -> Vec<PositionManagerActivePositionGrpcModel> {
+        let mut grpc_client = self.create_grpc_service().await;
+        let result = grpc_client
+            .get_account_active_positions(PositionManagerGetActivePositionsGrpcRequest {
+                trader_id: trader_id.to_string(),
+                account_id: account_id.to_string(),
+            })
+            .await
+            .unwrap();
+
+        return match my_grpc_extensions::read_grpc_stream::as_vec(result.into_inner(), self.timeout)
+            .await
+            .unwrap()
+        {
+            Some(result) => result,
+            None => vec![],
+        };
     }
 
     pub async fn update_sl_tp(

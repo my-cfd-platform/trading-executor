@@ -128,11 +128,6 @@ message TradingExecutorClosePositionGrpcResponse{
 message TradingExecutorGetActivePositionsGrpcRequest{
     string TraderId = 1;
     string AccountId = 2;
-    string PositionId = 3;
-    string TpInProfit = 4;
-    string SlInProfit = 5;
-    string TpInAssetPrice = 6;
-    string SlInAssetPrice = 7;
 }
 
 message TradingExecutorUpdateSlTpGrpcRequest{

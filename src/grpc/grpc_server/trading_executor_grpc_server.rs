@@ -59,7 +59,10 @@ impl TradingExecutorGrpcService for GrpcService {
         &self,
         request: tonic::Request<TradingExecutorGetActivePositionsGrpcRequest>,
     ) -> Result<tonic::Response<Self::GetAccountActivePositionsStream>, tonic::Status> {
-        todo!()
+        let request = request.into_inner();
+        let positions = self.app.position_manager_grpc_client.get_active_positions(&request.trader_id, &request.account_id).await;
+
+        my_grpc_extensions::grpc_server::send_vec_to_stream(positions, |x| x.into()).await
     }
 
     async fn update_sl_tp(
