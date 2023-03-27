@@ -10,6 +10,8 @@ impl Into<TradingExecutorActivePositionGrpcModel> for PositionManagerActivePosit
     fn into(self) -> TradingExecutorActivePositionGrpcModel {
         TradingExecutorActivePositionGrpcModel {
             id: self.id,
+            account_id: self.account_id,
+            trader_id: self.trader_id,
             asset_pair: self.asset_pair,
             side: self.side,
             invest_amount: self.invest_amount,

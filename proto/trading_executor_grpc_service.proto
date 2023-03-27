@@ -62,24 +62,26 @@ message TradingExecutorOpenPositionGrpcRequest{
 
 message TradingExecutorActivePositionGrpcModel{
     string Id = 1;
-    string AssetPair = 2;
-    TradingExecutorPositionSide Side = 3;
-    double InvestAmount = 4;
-    double Leverage = 5;
-    double StopOutPercent = 6;
-    string CreateProcessId = 7;
-    uint64 CreateDateUnixTimestampMilis = 8;
-    string LastUpdateProcessId = 9;
-    uint64 LastUpdateDate = 11;
-    optional double TpInProfit = 12;
-    optional double SlInProfit = 13;
-    optional double TpInAssetPrice = 14;
-    optional double SlInAssetPrice = 15;
-    double OpenPrice = 16;
-    TradingExecutorBidAsk OpenBidAsk = 17;
-    string OpenProcessId = 18;
-    uint64 OpenDate = 19;
-    double Profit = 20;
+    string TraderId = 2;
+    string AccountId = 3;
+    string AssetPair = 4;
+    TradingExecutorPositionSide Side = 5;
+    double InvestAmount = 6;
+    double Leverage = 7;
+    double StopOutPercent = 8;
+    string CreateProcessId = 9;
+    uint64 CreateDateUnixTimestampMilis = 10;
+    string LastUpdateProcessId = 11;
+    uint64 LastUpdateDate = 12;
+    optional double TpInProfit = 13;
+    optional double SlInProfit = 14;
+    optional double TpInAssetPrice = 15;
+    optional double SlInAssetPrice = 16;
+    double OpenPrice = 17;
+    TradingExecutorBidAsk OpenBidAsk = 18;
+    string OpenProcessId = 19;
+    uint64 OpenDate = 20;
+    double Profit = 21;
 }
 
 message TradingExecutorOpenPositionGrpcResponse{
