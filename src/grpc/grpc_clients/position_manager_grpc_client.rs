@@ -55,13 +55,14 @@ impl PositionManagerGrpcClient {
         request: PositionManagerOpenPositionGrpcRequest,
     ) -> Result<TradingExecutorActivePositionGrpcModel, TradingExecutorError> {
         let mut grpc_client = self.create_grpc_service().await;
-
+        println!("PM request: {:#?}", request);
         let response = grpc_client
-            .open_position(tonic::Request::new(request))
+            .open_position(request)
             .await
             .unwrap()
             .into_inner();
 
+        println!("PM response: {:#?}", response);
         if let Some(position) = response.position {
             return Ok(position.into());
         }

@@ -25,7 +25,6 @@ impl GrpcClientSettings for AccountsManagerSettingsGrpcUrl {
 
 pub struct AccountsManagerGrpcClient {
     channel: GrpcChannel,
-    timeout: Duration,
 }
 
 impl AccountsManagerGrpcClient {
@@ -36,7 +35,6 @@ impl AccountsManagerGrpcClient {
                 "accounts_manager",
                 Duration::from_secs(10),
             ),
-            timeout: Duration::from_secs(2),
         }
     }
 
