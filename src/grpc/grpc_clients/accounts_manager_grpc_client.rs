@@ -6,6 +6,7 @@ use tonic::transport::Channel;
 use crate::accounts_manager_grpc::{
     accounts_manager_grpc_service_client::AccountsManagerGrpcServiceClient,
     AccountManagerGetClientAccountGrpcRequest, AccountManagerGetClientAccountGrpcResponse,
+    AccountManagerUpdateAccountBalanceGrpcRequest, AccountManagerUpdateAccountBalanceGrpcResponse,
 };
 
 struct AccountsManagerSettingsGrpcUrl(String);
@@ -54,6 +55,29 @@ impl AccountsManagerGrpcClient {
         };
         return grpc_client
             .get_client_account(tonic::Request::new(request))
+            .await
+            .unwrap()
+            .into_inner();
+    }
+
+    pub async fn update_client_balance(
+        &self,
+        trader_id: &str,
+        account_id: &str,
+        balance_delta: f64,
+        process_id: &str,
+    ) -> AccountManagerUpdateAccountBalanceGrpcResponse {
+        let mut grpc_client = self.create_grpc_service().await;
+
+        return grpc_client
+            .update_client_account_balance(AccountManagerUpdateAccountBalanceGrpcRequest {
+                trader_id: trader_id.to_string(),
+                account_id: account_id.to_string(),
+                delta: balance_delta,
+                comment: "Open position balance charge".to_string(),
+                process_id: process_id.to_string(),
+                allow_negative_balance: false,
+            })
             .await
             .unwrap()
             .into_inner();

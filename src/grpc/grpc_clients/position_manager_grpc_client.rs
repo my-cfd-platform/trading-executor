@@ -6,11 +6,14 @@ use tonic::transport::Channel;
 use crate::{
     position_manager_grpc::{
         position_manager_grpc_service_client::PositionManagerGrpcServiceClient,
-        PositionManagerActivePositionGrpcModel, PositionManagerGetActivePositionsGrpcRequest,
+        PositionManagerActivePositionGrpcModel, PositionManagerClosePositionGrpcRequest,
+        PositionManagerGetActivePositionGrpcRequest, PositionManagerGetActivePositionsGrpcRequest,
         PositionManagerOpenPositionGrpcRequest, PositionManagerUpdateSlTpGrpcRequest,
         PositionManagerUpdateSlTpGrpcResponse,
     },
-    trading_executor_grpc::TradingExecutorActivePositionGrpcModel,
+    trading_executor_grpc::{
+        TradingExecutorActivePositionGrpcModel, TradingExecutorClosedPositionGrpcModel,
+    },
     TradingExecutorError,
 };
 
@@ -70,6 +73,33 @@ impl PositionManagerGrpcClient {
         return Err(TradingExecutorError::from(response.status));
     }
 
+    pub async fn close_position(
+        &self,
+        trader_id: &str,
+        account_id: &str,
+        position_id: &str,
+        process_id: &str,
+    ) -> Result<TradingExecutorClosedPositionGrpcModel, TradingExecutorError> {
+        let mut grpc_client = self.create_grpc_service().await;
+        let response = grpc_client
+            .close_position(PositionManagerClosePositionGrpcRequest {
+                position_id: position_id.to_string(),
+                process_id: process_id.to_string(),
+                account_id: account_id.to_string(),
+                trader_id: trader_id.to_string(),
+            })
+            .await
+            .unwrap()
+            .into_inner();
+
+        println!("PM response: {:#?}", response);
+        if let Some(position) = response.position {
+            return Ok(position.into());
+        }
+
+        return Err(TradingExecutorError::from(response.status));
+    }
+
     pub async fn get_active_positions(
         &self,
         trader_id: &str,
@@ -91,6 +121,26 @@ impl PositionManagerGrpcClient {
             Some(result) => result,
             None => vec![],
         };
+    }
+
+    pub async fn get_active_position(
+        &self,
+        trader_id: &str,
+        account_id: &str,
+        position_id: &str,
+    ) -> Option<PositionManagerActivePositionGrpcModel> {
+        let mut grpc_client = self.create_grpc_service().await;
+        let result = grpc_client
+            .get_active_position(PositionManagerGetActivePositionGrpcRequest {
+                trader_id: trader_id.to_string(),
+                account_id: account_id.to_string(),
+                position_id: position_id.to_string(),
+            })
+            .await
+            .unwrap()
+            .into_inner();
+
+        return result.position;
     }
 
     pub async fn update_sl_tp(

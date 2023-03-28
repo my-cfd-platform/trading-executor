@@ -1,13 +1,14 @@
 use std::pin::Pin;
 
 use crate::{
-    open_position,
+    close_position, open_position,
     trading_executor_grpc::{
         trading_executor_grpc_service_server::TradingExecutorGrpcService,
         TradingExecutorActivePositionGrpcModel, TradingExecutorClosePositionGrpcRequest,
         TradingExecutorClosePositionGrpcResponse, TradingExecutorGetActivePositionsGrpcRequest,
         TradingExecutorOpenPositionGrpcRequest, TradingExecutorOpenPositionGrpcResponse,
-        TradingExecutorUpdateSlTpGrpcRequest, TradingExecutorUpdateSlTpGrpcResponse, TradingExecutorOperationsCodes,
+        TradingExecutorOperationsCodes, TradingExecutorUpdateSlTpGrpcRequest,
+        TradingExecutorUpdateSlTpGrpcResponse,
     },
     GrpcService,
 };
@@ -40,9 +41,10 @@ impl TradingExecutorGrpcService for GrpcService {
             Err(error) => {
                 let error: TradingExecutorOperationsCodes = error.into();
                 TradingExecutorOpenPositionGrpcResponse {
-                status: error.into(),
-                positon: None,
-            }},
+                    status: error.into(),
+                    positon: None,
+                }
+            }
         };
 
         Ok(tonic::Response::new(response))
@@ -52,7 +54,25 @@ impl TradingExecutorGrpcService for GrpcService {
         &self,
         request: tonic::Request<TradingExecutorClosePositionGrpcRequest>,
     ) -> Result<tonic::Response<TradingExecutorClosePositionGrpcResponse>, tonic::Status> {
-        todo!()
+        let request = request.into_inner();
+
+        let open_position_result = close_position(&self.app, request).await;
+
+        let response = match open_position_result {
+            Ok(position) => TradingExecutorClosePositionGrpcResponse {
+                status: 0,
+                position: Some(position),
+            },
+            Err(error) => {
+                let error: TradingExecutorOperationsCodes = error.into();
+                TradingExecutorClosePositionGrpcResponse {
+                    status: error.into(),
+                    position: None,
+                }
+            }
+        };
+
+        Ok(tonic::Response::new(response))
     }
 
     async fn get_account_active_positions(
@@ -60,14 +80,18 @@ impl TradingExecutorGrpcService for GrpcService {
         request: tonic::Request<TradingExecutorGetActivePositionsGrpcRequest>,
     ) -> Result<tonic::Response<Self::GetAccountActivePositionsStream>, tonic::Status> {
         let request = request.into_inner();
-        let positions = self.app.position_manager_grpc_client.get_active_positions(&request.trader_id, &request.account_id).await;
+        let positions = self
+            .app
+            .position_manager_grpc_client
+            .get_active_positions(&request.trader_id, &request.account_id)
+            .await;
 
         my_grpc_extensions::grpc_server::send_vec_to_stream(positions, |x| x.into()).await
     }
 
     async fn update_sl_tp(
         &self,
-        request: tonic::Request<TradingExecutorUpdateSlTpGrpcRequest>,
+        _: tonic::Request<TradingExecutorUpdateSlTpGrpcRequest>,
     ) -> Result<tonic::Response<TradingExecutorUpdateSlTpGrpcResponse>, tonic::Status> {
         todo!()
     }

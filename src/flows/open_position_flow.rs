@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
 use my_nosql_contracts::{
-    TradingGroupNoSqlEntity, TradingInstrumentNoSqlEntity,
-    TradingProfileNoSqlEntity,
+    TradingGroupNoSqlEntity, TradingInstrumentNoSqlEntity, TradingProfileNoSqlEntity,
 };
 
 use crate::{
+    accounts_manager_grpc::AccountsManagerOperationResult,
     position_manager_grpc::PositionManagerOpenPositionGrpcRequest,
     trading_executor_grpc::{
         TradingExecutorActivePositionGrpcModel, TradingExecutorOpenPositionGrpcRequest,
@@ -54,6 +54,22 @@ pub async fn open_position(
         .contains(&request.leverage)
     {
         return Err(TradingExecutorError::MultiplierIsNotFound);
+    }
+
+    let balance_update_result = app
+        .accounts_manager_grpc_client
+        .update_client_balance(
+            &request.trader_id,
+            &request.account_id,
+            -request.invest_amount,
+            &request.process_id,
+        )
+        .await;
+
+    if AccountsManagerOperationResult::Ok
+        != AccountsManagerOperationResult::from_i32(balance_update_result.result).unwrap()
+    {
+        return Err(TradingExecutorError::NotEnoughBalance);
     }
 
     let open_position_request = PositionManagerOpenPositionGrpcRequest {

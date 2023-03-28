@@ -116,6 +116,17 @@ message PositionManagerGetActivePositionsGrpcRequest{
     string AccountId = 2;
 }
 
+message PositionManagerGetActivePositionGrpcRequest{
+    string TraderId = 1;
+    string AccountId = 2;
+    string PositionId = 3;
+}
+
+message PositionManagerGetActivePositionGrpcResponse{
+    PositionManagerOperationsCodes Status = 1;
+    optional PositionManagerActivePositionGrpcModel Position = 2;
+}
+
 message PositionManagerUpdateSlTpGrpcRequest{
     string PositionId = 1;
     string AccountId = 3;
@@ -136,5 +147,6 @@ service PositionManagerGrpcService {
     rpc OpenPosition(position_manager.PositionManagerOpenPositionGrpcRequest) returns (position_manager.PositionManagerOpenPositionGrpcResponse);
     rpc ClosePosition(position_manager.PositionManagerClosePositionGrpcRequest) returns (position_manager.PositionManagerClosePositionGrpcResponse);
     rpc GetAccountActivePositions(position_manager.PositionManagerGetActivePositionsGrpcRequest) returns (stream PositionManagerActivePositionGrpcModel);
+    rpc GetActivePosition(position_manager.PositionManagerGetActivePositionGrpcRequest) returns (PositionManagerGetActivePositionGrpcResponse);
     rpc UpdateSlTp(position_manager.PositionManagerUpdateSlTpGrpcRequest) returns (PositionManagerUpdateSlTpGrpcResponse);
  }
