@@ -8,6 +8,13 @@ enum AccountsManagerOperationResult{
     NotEnoughBalance = 3;
 }
 
+enum UpdateBalanceReason {
+    TradingResult = 0;
+    BalanceCorrection = 1;
+    Deposit = 2;
+    Withdrawal = 3;
+}
+
 message AccountGrpcModel{
     string Id = 1;
     string TraderId = 2;
@@ -25,6 +32,7 @@ message AccountManagerCreateAccountGrpcRequest{
     string TraderId = 1;
     string Currency = 2;
     string ProcessId = 3;
+    optional string TradingGroupId = 4;
 }
 
 message AccountManagerUpdateAccountBalanceGrpcRequest{
@@ -34,6 +42,8 @@ message AccountManagerUpdateAccountBalanceGrpcRequest{
      string Comment = 4;
      string ProcessId = 5;
      bool AllowNegativeBalance = 6;
+     UpdateBalanceReason Reason = 7;
+     optional string ReferenceTransactionId = 8;
 }
 
 message AccountManagerGetClientAccountGrpcRequest{
@@ -57,9 +67,14 @@ message AccountManagerUpdateTradingDisabledGrpcResponse{
     optional accounts_manager.AccountGrpcModel Account = 2;
 }
 
+message AccountManagerUpdateBalanceBalanceGrpcInfo{
+    string OperationId = 1;
+    accounts_manager.AccountGrpcModel Account = 2;
+}
+
 message AccountManagerUpdateAccountBalanceGrpcResponse{
     accounts_manager.AccountsManagerOperationResult Result = 1;
-    optional accounts_manager.AccountGrpcModel Account = 2;
+    optional accounts_manager.AccountManagerUpdateBalanceBalanceGrpcInfo UpdateBalanceInfo = 2;
 }
 
 message AccountManagerGetClientAccountGrpcResponse{
