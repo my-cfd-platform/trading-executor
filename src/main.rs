@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use trading_executor::{start_grpc_server, AppContext, SettingsReader};
+use trading_executor::{start_grpc_server, AppContext, SettingsReader, APP_NAME, APP_VERSION};
 
 #[tokio::main]
 async fn main() {
@@ -11,7 +11,15 @@ async fn main() {
 
     let app = Arc::new(app);
 
-    app.my_no_sql_connection.start().await;
+    app.my_no_sql_connection
+        .start(my_logger::LOGGER.clone())
+        .await;
+
+    http_is_alive_shared::start_up::start_server(
+        APP_NAME.to_string(),
+        APP_VERSION.to_string(),
+        app.app_states.clone(),
+    );
 
     tokio::spawn(start_grpc_server(app.clone(), 8888));
 

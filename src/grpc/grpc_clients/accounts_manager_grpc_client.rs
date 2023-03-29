@@ -68,21 +68,35 @@ impl AccountsManagerGrpcClient {
         balance_delta: f64,
         process_id: &str,
     ) -> AccountManagerUpdateAccountBalanceGrpcResponse {
-        let mut grpc_client = self.create_grpc_service().await;
+        let mut attempt_no = 0;
 
-        return grpc_client
-            .update_client_account_balance(AccountManagerUpdateAccountBalanceGrpcRequest {
-                trader_id: trader_id.to_string(),
-                account_id: account_id.to_string(),
-                delta: balance_delta,
-                comment: "Open position balance charge".to_string(),
-                process_id: process_id.to_string(),
-                allow_negative_balance: false,
-                reason: UpdateBalanceReason::TradingResult as i32,
-                reference_transaction_id: None,
-            })
-            .await
-            .unwrap()
-            .into_inner();
+        loop {
+            let mut grpc_client = self.create_grpc_service().await;
+
+            let future = grpc_client.update_client_account_balance(
+                AccountManagerUpdateAccountBalanceGrpcRequest {
+                    trader_id: trader_id.to_string(),
+                    account_id: account_id.to_string(),
+                    delta: balance_delta,
+                    comment: "Open position balance charge".to_string(),
+                    process_id: process_id.to_string(),
+                    allow_negative_balance: false,
+                    reason: UpdateBalanceReason::TradingResult as i32,
+                    reference_transaction_id: None,
+                },
+            );
+
+            match self.channel.execute_with_timeout(future).await {
+                Ok(result) => {
+                    return result.into_inner();
+                }
+                Err(err) => {
+                    self.channel
+                        .handle_error(err, &mut attempt_no, 3)
+                        .await
+                        .unwrap();
+                }
+            }
+        }
     }
 }
