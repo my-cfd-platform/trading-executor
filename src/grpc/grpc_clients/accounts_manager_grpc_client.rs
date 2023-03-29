@@ -7,6 +7,7 @@ use crate::accounts_manager_grpc::{
     accounts_manager_grpc_service_client::AccountsManagerGrpcServiceClient,
     AccountManagerGetClientAccountGrpcRequest, AccountManagerGetClientAccountGrpcResponse,
     AccountManagerUpdateAccountBalanceGrpcRequest, AccountManagerUpdateAccountBalanceGrpcResponse,
+    UpdateBalanceReason,
 };
 
 struct AccountsManagerSettingsGrpcUrl(String);
@@ -77,6 +78,8 @@ impl AccountsManagerGrpcClient {
                 comment: "Open position balance charge".to_string(),
                 process_id: process_id.to_string(),
                 allow_negative_balance: false,
+                reason: UpdateBalanceReason::TradingResult as i32,
+                reference_transaction_id: None,
             })
             .await
             .unwrap()
