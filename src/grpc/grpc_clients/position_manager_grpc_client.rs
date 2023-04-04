@@ -129,16 +129,23 @@ impl PositionManagerGrpcClient {
         account_id: &str,
         position_id: &str,
     ) -> Option<PositionManagerActivePositionGrpcModel> {
+
+        let request = PositionManagerGetActivePositionGrpcRequest {
+            trader_id: trader_id.to_string(),
+            account_id: account_id.to_string(),
+            position_id: position_id.to_string(),
+        };
+
+        println!("PM request: {:#?}", request);
+
         let mut grpc_client = self.create_grpc_service().await;
         let result = grpc_client
-            .get_active_position(PositionManagerGetActivePositionGrpcRequest {
-                trader_id: trader_id.to_string(),
-                account_id: account_id.to_string(),
-                position_id: position_id.to_string(),
-            })
+            .get_active_position(request)
             .await
             .unwrap()
             .into_inner();
+
+        println!("PM response: {:#?}", result);
 
         return result.position;
     }
