@@ -10,7 +10,7 @@ use crate::{
         TradingExecutorOperationsCodes, TradingExecutorUpdateSlTpGrpcRequest,
         TradingExecutorUpdateSlTpGrpcResponse,
     },
-    GrpcService,
+    update_sl_tp, GrpcService,
 };
 
 #[tonic::async_trait]
@@ -91,8 +91,24 @@ impl TradingExecutorGrpcService for GrpcService {
 
     async fn update_sl_tp(
         &self,
-        _: tonic::Request<TradingExecutorUpdateSlTpGrpcRequest>,
+        request: tonic::Request<TradingExecutorUpdateSlTpGrpcRequest>,
     ) -> Result<tonic::Response<TradingExecutorUpdateSlTpGrpcResponse>, tonic::Status> {
-        todo!()
+        let update_sl_tp_result = update_sl_tp(&self.app, request.into_inner()).await;
+
+        let response: TradingExecutorUpdateSlTpGrpcResponse = match update_sl_tp_result {
+            Ok(position) => TradingExecutorUpdateSlTpGrpcResponse {
+                status: 0,
+                position: Some(position),
+            },
+            Err(error) => {
+                let error: TradingExecutorOperationsCodes = error.into();
+                TradingExecutorUpdateSlTpGrpcResponse {
+                    status: error.into(),
+                    position: None,
+                }
+            }
+        };
+
+        Ok(tonic::Response::new(response))
     }
 }

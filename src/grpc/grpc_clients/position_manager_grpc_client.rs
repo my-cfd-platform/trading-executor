@@ -9,7 +9,6 @@ use crate::{
         PositionManagerActivePositionGrpcModel, PositionManagerClosePositionGrpcRequest,
         PositionManagerGetActivePositionGrpcRequest, PositionManagerGetActivePositionsGrpcRequest,
         PositionManagerOpenPositionGrpcRequest, PositionManagerUpdateSlTpGrpcRequest,
-        PositionManagerUpdateSlTpGrpcResponse,
     },
     trading_executor_grpc::{
         TradingExecutorActivePositionGrpcModel, TradingExecutorClosedPositionGrpcModel,
@@ -129,7 +128,6 @@ impl PositionManagerGrpcClient {
         account_id: &str,
         position_id: &str,
     ) -> Option<PositionManagerActivePositionGrpcModel> {
-
         let request = PositionManagerGetActivePositionGrpcRequest {
             trader_id: trader_id.to_string(),
             account_id: account_id.to_string(),
@@ -153,9 +151,19 @@ impl PositionManagerGrpcClient {
     pub async fn update_sl_tp(
         &self,
         request: PositionManagerUpdateSlTpGrpcRequest,
-    ) -> Result<tonic::Response<PositionManagerUpdateSlTpGrpcResponse>, tonic::Status> {
+    ) -> Result<TradingExecutorActivePositionGrpcModel, TradingExecutorError> {
         let mut grpc_client = self.create_grpc_service().await;
 
-        return grpc_client.update_sl_tp(tonic::Request::new(request)).await;
+        let response = grpc_client
+            .update_sl_tp(tonic::Request::new(request))
+            .await
+            .unwrap()
+            .into_inner();
+
+        if let Some(position) = response.position {
+            return Ok(position.into());
+        }
+
+        return Err(TradingExecutorError::from(response.status));
     }
 }
