@@ -140,7 +140,7 @@ message TradingExecutorUpdateSlTpGrpcRequest{
     optional double SlInProfit = 6;
     optional double TpInAssetPrice = 7;
     optional double SlInAssetPrice = 8;
-    double ProcessId = 9;
+    string ProcessId = 9;
 }
 
 message TradingExecutorUpdateSlTpGrpcResponse{
