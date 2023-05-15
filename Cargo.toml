@@ -15,7 +15,7 @@ my-settings-reader = { tag = "0.1.5", git = "https://github.com/MyJetTools/my-se
 ] }
 flurl = { tag = "0.2.3", git = "https://github.com/MyJetTools/fl-url.git" }
 my-no-sql-tcp-reader = { tag = "0.2.0", git = "https://github.com/MyJetTools/my-no-sql-tcp-reader.git" }
-my-nosql-contracts = { tag = "0.1.10", git = "https://github.com/my-cfd-platform/my-nosql-contracts.git" }
+my-nosql-contracts = { tag = "0.1.16", git = "https://github.com/my-cfd-platform/my-nosql-contracts.git" }
 my-grpc-extensions = { tag = "0.3.0", git = "https://github.com/MyJetTools/my-grpc-extensions.git" }
 
 my-logger = { tag = "0.2.0", git = "https://github.com/MyJetTools/my-logger.git" }

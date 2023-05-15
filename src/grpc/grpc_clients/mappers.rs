@@ -1,11 +1,12 @@
 use crate::{
+    a_book_bridge_grpc::ABookBridgePositionSide,
     position_manager_grpc::{
         PositionManagerActivePositionGrpcModel, PositionManagerBidAsk,
         PositionManagerClosedPositionGrpcModel,
     },
     trading_executor_grpc::{
         TradingExecutorActivePositionGrpcModel, TradingExecutorBidAsk,
-        TradingExecutorClosedPositionGrpcModel,
+        TradingExecutorClosedPositionGrpcModel, TradingExecutorPositionSide,
     },
     TradingExecutorError,
 };
@@ -86,6 +87,15 @@ impl From<i32> for TradingExecutorError {
             1 => TradingExecutorError::NoLiquidity,
             2 => TradingExecutorError::PositionNotFound,
             _ => panic!("Invalud operation code from position manager"),
+        }
+    }
+}
+
+impl Into<ABookBridgePositionSide> for TradingExecutorPositionSide {
+    fn into(self) -> ABookBridgePositionSide {
+        match self {
+            TradingExecutorPositionSide::Buy => ABookBridgePositionSide::Buy,
+            TradingExecutorPositionSide::Sell => ABookBridgePositionSide::Sell,
         }
     }
 }

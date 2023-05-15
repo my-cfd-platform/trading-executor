@@ -9,6 +9,7 @@ use crate::{
     position_manager_grpc::PositionManagerOpenPositionGrpcRequest,
     trading_executor_grpc::{
         TradingExecutorActivePositionGrpcModel, TradingExecutorOpenPositionGrpcRequest,
+        TradingExecutorPositionSide,
     },
     AppContext, TradingExecutorError,
 };
@@ -93,6 +94,20 @@ pub async fn open_position(
         .position_manager_grpc_client
         .open_position(open_position_request)
         .await?;
+
+    if target_trading_profile.is_a_book {
+        app.a_book_bridge_grpc_client
+            .open_position(
+                &position.id,
+                &position.account_id,
+                position.leverage,
+                position.invest_amount,
+                &position.asset_pair,
+                TradingExecutorPositionSide::from_i32(position.side).unwrap(),
+            )
+            .await
+            .unwrap();
+    }
 
     return Ok(position);
 }

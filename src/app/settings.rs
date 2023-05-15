@@ -8,6 +8,8 @@ pub struct SettingsModel {
     pub accounts_manager_grpc: String,
     #[serde(rename = "PositionManagerGrpc")]
     pub position_manager_grpc: String,
+    #[serde(rename = "ABookBridgeGrpc")]
+    pub a_book_bridge_grpc: String,
     #[serde(rename = "NoSqlTcp")]
     pub no_sql_tcp: String,
 }

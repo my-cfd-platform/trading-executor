@@ -12,6 +12,9 @@ pub mod trading_executor_grpc {
 pub mod accounts_manager_grpc {
     tonic::include_proto!("accounts_manager");
 }
+pub mod a_book_bridge_grpc {
+    tonic::include_proto!("a_book_bridge");
+}
 
 pub use app::*;
 pub use flows::*;
