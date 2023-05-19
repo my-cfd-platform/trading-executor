@@ -42,6 +42,9 @@ message PositionManagerOpenPositionGrpcRequest{
     optional PositionManagerBidAsk OpenBidAsk = 12;
     string AccountId = 13;
     string TraderId = 14;
+    string Base = 15;
+    string Quote = 16;
+    string CollateralCurrency = 17;
 }
 
 message PositionManagerActivePositionGrpcModel{

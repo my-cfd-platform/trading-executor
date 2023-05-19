@@ -28,7 +28,7 @@ pub async fn open_position(
         )
         .await;
 
-    let Some(_) = target_instrument else{
+    let Some(target_instrument) = target_instrument else{
         return Err(TradingExecutorError::InstrumentNotFound)
     };
     let Some(target_account) = app
@@ -88,6 +88,9 @@ pub async fn open_position(
         open_bid_ask: None,
         account_id: request.account_id.clone(),
         trader_id: request.trader_id.clone(),
+        base: target_instrument.base.clone(),
+        quote: target_instrument.quote.clone(),
+        collateral_currency: "USD".to_string(),
     };
 
     let position = app
