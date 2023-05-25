@@ -18,7 +18,6 @@ pub async fn open_position(
     app: &Arc<AppContext>,
     request: TradingExecutorOpenPositionGrpcRequest,
 ) -> Result<TradingExecutorActivePositionGrpcModel, TradingExecutorError> {
-
     let position_id = uuid::Uuid::new_v4().to_string();
 
     let target_instrument = app
@@ -68,8 +67,7 @@ pub async fn open_position(
                 &request.asset_pair,
                 TradingExecutorPositionSide::from_i32(request.side).unwrap(),
             )
-            .await
-            .unwrap();
+            .await?;
     }
 
     let balance_update_result = app

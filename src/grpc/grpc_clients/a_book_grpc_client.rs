@@ -9,7 +9,7 @@ use crate::{
         ABookBridgeOpenPositionGrpcRequest, ABookBridgeOpenPositionGrpcResponsePositionModel,
         ABookBridgePositionSide,
     },
-    trading_executor_grpc::TradingExecutorPositionSide,
+    trading_executor_grpc::TradingExecutorPositionSide, TradingExecutorError,
 };
 
 struct ABookBridgeSettingsGrpcUrl(String);
@@ -54,7 +54,7 @@ impl ABookBridgeGrpcClient {
         invest_amount: f64,
         instrument: &str,
         side: TradingExecutorPositionSide,
-    ) -> Result<ABookBridgeOpenPositionGrpcResponsePositionModel, ()> {
+    ) -> Result<ABookBridgeOpenPositionGrpcResponsePositionModel, TradingExecutorError> {
         let mut grpc_client = self.create_grpc_service().await;
         let side: ABookBridgePositionSide = side.into();
         let request = ABookBridgeOpenPositionGrpcRequest {
@@ -75,7 +75,7 @@ impl ABookBridgeGrpcClient {
         if response.status_code == 0 {
             Ok(response.position.unwrap())
         } else {
-            Err(())
+            Err(TradingExecutorError::ABookReject)
         }
     }
 }
