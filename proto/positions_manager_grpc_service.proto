@@ -45,6 +45,7 @@ message PositionManagerOpenPositionGrpcRequest{
     string Base = 15;
     string Quote = 16;
     string CollateralCurrency = 17;
+    optional string Id = 18;
 }
 
 message PositionManagerActivePositionGrpcModel{

@@ -24,6 +24,7 @@ impl Into<TradingExecutorOperationsCodes> for TradingExecutorError {
             TradingExecutorError::TradingGroupNotFound => TradingExecutorOperationsCodes::TradingGroupNotFound,
             TradingExecutorError::TradingProfileNotFound => TradingExecutorOperationsCodes::TradingProfileNotFound,
             TradingExecutorError::TradingProfileInstrumentNotFound => TradingExecutorOperationsCodes::TradingProfileInstrumentNotFound,
+            TradingExecutorError::ABookReject => TradingExecutorOperationsCodes::ABookReject,
         }
     }
 }

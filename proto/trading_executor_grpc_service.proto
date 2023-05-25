@@ -24,6 +24,7 @@ enum TradingExecutorOperationsCodes{
     TradingGroupNotFound = 19;
     TradingProfileNotFound =20;
     TradingProfileInstrumentNotFound = 21;
+    ABookReject = 22;
 }
 
 enum TradingExecutorClosePositionReason{

@@ -20,4 +20,5 @@ pub enum TradingExecutorError {
     TradingGroupNotFound,
     TradingProfileNotFound,
     TradingProfileInstrumentNotFound,
+    ABookReject,
 }

@@ -18,7 +18,8 @@ pub async fn open_position(
     app: &Arc<AppContext>,
     request: TradingExecutorOpenPositionGrpcRequest,
 ) -> Result<TradingExecutorActivePositionGrpcModel, TradingExecutorError> {
-    // let datetime = Utc::now();
+
+    let position_id = uuid::Uuid::new_v4().to_string();
 
     let target_instrument = app
         .trading_instruments_reader
@@ -57,6 +58,20 @@ pub async fn open_position(
         return Err(TradingExecutorError::MultiplierIsNotFound);
     }
 
+    if target_trading_profile.is_a_book {
+        app.a_book_bridge_grpc_client
+            .open_position(
+                &position_id,
+                &request.account_id,
+                request.leverage as f64,
+                request.invest_amount,
+                &request.asset_pair,
+                TradingExecutorPositionSide::from_i32(request.side).unwrap(),
+            )
+            .await
+            .unwrap();
+    }
+
     let balance_update_result = app
         .accounts_manager_grpc_client
         .update_client_balance(
@@ -91,26 +106,13 @@ pub async fn open_position(
         base: target_instrument.base.clone(),
         quote: target_instrument.quote.clone(),
         collateral_currency: "USD".to_string(),
+        id: Some(position_id),
     };
 
     let position = app
         .position_manager_grpc_client
         .open_position(open_position_request)
         .await?;
-
-    if target_trading_profile.is_a_book {
-        app.a_book_bridge_grpc_client
-            .open_position(
-                &position.id,
-                &position.account_id,
-                position.leverage,
-                position.invest_amount,
-                &position.asset_pair,
-                TradingExecutorPositionSide::from_i32(position.side).unwrap(),
-            )
-            .await
-            .unwrap();
-    }
 
     return Ok(position);
 }
