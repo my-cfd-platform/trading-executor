@@ -1,9 +1,12 @@
 use std::sync::Arc;
 
+use my_grpc_extensions::GrpcClientSettings;
 use my_no_sql_tcp_reader::{MyNoSqlDataReader, MyNoSqlTcpConnection};
 use rust_extensions::AppStates;
 
-use crate::{AccountsManagerGrpcClient, PositionManagerGrpcClient, SettingsModel, ABookBridgeGrpcClient};
+use crate::{
+    ABookBridgeGrpcClient, AccountsManagerGrpcClient, PositionManagerGrpcClient, SettingsModel,
+};
 use my_nosql_contracts::{
     TradingGroupNoSqlEntity, TradingInstrumentNoSqlEntity, TradingProfileNoSqlEntity,
 };
@@ -24,17 +27,17 @@ pub struct AppContext {
 
 impl AppContext {
     pub async fn new(settings: Arc<SettingsModel>) -> AppContext {
-        let position_manager_grpc_client = Arc::new(
-            PositionManagerGrpcClient::new(settings.position_manager_grpc.to_string()).await,
-        );
+        let position_manager_grpc_client = Arc::new(PositionManagerGrpcClient::new(
+            GrpcSettings::new_arc(settings.position_manager_grpc.to_string()),
+        ));
 
-        let accounts_manager_grpc_client = Arc::new(
-            AccountsManagerGrpcClient::new(settings.accounts_manager_grpc.to_string()).await,
-        );
+        let accounts_manager_grpc_client = Arc::new(AccountsManagerGrpcClient::new(
+            GrpcSettings::new_arc(settings.accounts_manager_grpc.to_string()),
+        ));
 
-        let a_book_bridge_grpc_client = Arc::new(
-            ABookBridgeGrpcClient::new(settings.a_book_bridge_grpc.to_string()).await,
-        );
+        let a_book_bridge_grpc_client = Arc::new(ABookBridgeGrpcClient::new(
+            GrpcSettings::new_arc(settings.a_book_bridge_grpc.to_string()),
+        ));
 
         let my_no_sql_connection = my_no_sql_tcp_reader::MyNoSqlTcpConnection::new(
             format!("{}:{}", crate::app::APP_NAME, crate::app::APP_VERSION),
@@ -53,7 +56,22 @@ impl AppContext {
             trading_profiles_reader,
             my_no_sql_connection,
             app_states: Arc::new(AppStates::create_initialized()),
-            a_book_bridge_grpc_client
+            a_book_bridge_grpc_client,
         }
+    }
+}
+
+pub struct GrpcSettings(String);
+
+impl GrpcSettings {
+    pub fn new_arc(url: String) -> Arc<Self> {
+        Arc::new(Self(url))
+    }
+}
+
+#[tonic::async_trait]
+impl GrpcClientSettings for GrpcSettings {
+    async fn get_grpc_url(&self, name: &'static str) -> String {
+        self.0.clone()
     }
 }

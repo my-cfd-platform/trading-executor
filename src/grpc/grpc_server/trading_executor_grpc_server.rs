@@ -2,6 +2,9 @@ use std::pin::Pin;
 
 use crate::{
     close_position, open_position,
+    position_manager_grpc::{
+        PositionManagerGetActivePositionGrpcRequest, PositionManagerGetActivePositionsGrpcRequest,
+    },
     trading_executor_grpc::{
         trading_executor_grpc_service_server::TradingExecutorGrpcService,
         TradingExecutorActivePositionGrpcModel, TradingExecutorClosePositionGrpcRequest,
@@ -12,14 +15,14 @@ use crate::{
     },
     update_sl_tp, GrpcService,
 };
+use futures_core::Stream;
 
 #[tonic::async_trait]
 impl TradingExecutorGrpcService for GrpcService {
     type GetAccountActivePositionsStream = Pin<
         Box<
-            dyn tonic::codegen::futures_core::Stream<
-                    Item = Result<TradingExecutorActivePositionGrpcModel, tonic::Status>,
-                > + Send
+            dyn Stream<Item = Result<TradingExecutorActivePositionGrpcModel, tonic::Status>>
+                + Send
                 + Sync
                 + 'static,
         >,
@@ -83,8 +86,20 @@ impl TradingExecutorGrpcService for GrpcService {
         let positions = self
             .app
             .position_manager_grpc_client
-            .get_active_positions(&request.trader_id, &request.account_id)
-            .await;
+            .get_account_active_positions(
+                PositionManagerGetActivePositionsGrpcRequest {
+                    trader_id: request.trader_id.clone(),
+                    account_id: request.account_id.clone(),
+                },
+                &my_telemetry::MyTelemetryContext::new(),
+            )
+            .await
+            .unwrap();
+
+        let positions = match positions {
+            Some(src) => src,
+            None => vec![],
+        };
 
         my_grpc_extensions::grpc_server::send_vec_to_stream(positions, |x| x.into()).await
     }
@@ -110,5 +125,12 @@ impl TradingExecutorGrpcService for GrpcService {
         };
 
         Ok(tonic::Response::new(response))
+    }
+
+    async fn ping(
+        &self,
+        request: tonic::Request<()>,
+    ) -> Result<tonic::Response<()>, tonic::Status> {
+        return Ok(tonic::Response::new(()));
     }
 }

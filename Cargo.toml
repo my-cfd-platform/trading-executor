@@ -16,9 +16,11 @@ my-settings-reader = { tag = "0.1.5", git = "https://github.com/MyJetTools/my-se
 flurl = { tag = "0.2.3", git = "https://github.com/MyJetTools/fl-url.git" }
 my-no-sql-tcp-reader = { tag = "0.2.0", git = "https://github.com/MyJetTools/my-no-sql-tcp-reader.git" }
 my-nosql-contracts = { tag = "0.1.16", git = "https://github.com/my-cfd-platform/my-nosql-contracts.git" }
-my-grpc-extensions = { tag = "0.3.0", git = "https://github.com/MyJetTools/my-grpc-extensions.git" }
+my-grpc-extensions = { tag = "0.4.0", git = "https://github.com/MyJetTools/my-grpc-extensions.git" }
 
 my-logger = { tag = "0.2.0", git = "https://github.com/MyJetTools/my-logger.git" }
+my-grpc-client-macros = { tag = "0.1.0", git = "https://github.com/MyJetTools/my-grpc-client-macros.git" }
+my-telemetry = { tag = "0.3.0", git = "https://github.com/MyJetTools/my-telemetry.git" }
 
 uuid = { version = "*", features = ["v4"] }
 tonic = { version = "*", features = ["tls", "tls-roots", "prost"] }
@@ -26,6 +28,7 @@ chrono = "*"
 prost = "*"
 prost-types = "*"
 tokio = "*"
+futures-core = "*"
 
 serde = "*"
 serde_json = "*"
@@ -33,4 +36,5 @@ serde_yaml = "*"
 serde_derive = "*"
 async-trait = "*"
 [build-dependencies]
-tonic-build = { version = "0.8.4", features = ["prost"] }
+tonic-build = { version = "0.10.0", features = ["prost"] }
+ci-utils = { git = "https://github.com/MyJetTools/ci-utils.git", tag = "0.1.0" }

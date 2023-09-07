@@ -2,7 +2,8 @@ use std::sync::Arc;
 
 use my_nosql_contracts::{TradingGroupNoSqlEntity, TradingProfileNoSqlEntity};
 
-use crate::{ 
+use crate::{
+    accounts_manager_grpc::AccountManagerGetClientAccountGrpcRequest,
     position_manager_grpc::PositionManagerUpdateSlTpGrpcRequest,
     trading_executor_grpc::{
         TradingExecutorActivePositionGrpcModel, TradingExecutorUpdateSlTpGrpcRequest,
@@ -14,11 +15,14 @@ pub async fn update_sl_tp(
     app: &Arc<AppContext>,
     request: TradingExecutorUpdateSlTpGrpcRequest,
 ) -> Result<TradingExecutorActivePositionGrpcModel, TradingExecutorError> {
-
     let Some(target_account) = app
         .accounts_manager_grpc_client
-        .get_client_account(&request.trader_id, &request.account_id)
-        .await.account else{
+        .get_client_account(AccountManagerGetClientAccountGrpcRequest{
+            trader_id: request.trader_id.clone(),
+            account_id: request.account_id.clone()
+        }, &my_telemetry::MyTelemetryContext::new())
+        .await
+        .unwrap().account else{
             return Err(TradingExecutorError::AccountNotFound)
         };
 
@@ -41,8 +45,16 @@ pub async fn update_sl_tp(
         process_id: request.process_id,
     };
 
-    return app
+    let update_result = app
         .position_manager_grpc_client
-        .update_sl_tp(pm_request)
+        .update_sl_tp(pm_request, &my_telemetry::MyTelemetryContext::new())
         .await;
+
+    let update_result = update_result.unwrap();
+
+    if let Some(position) = update_result.position {
+        return Ok(position.into());
+    }
+
+    return Err(TradingExecutorError::from(update_result.status));
 }

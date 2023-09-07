@@ -1,5 +1,6 @@
 syntax = "proto3";
 package trading_executor;
+import "google/protobuf/empty.proto";
 
 enum TradingExecutorOperationsCodes{
     Ok = 0;
@@ -154,4 +155,5 @@ service TradingExecutorGrpcService {
     rpc ClosePosition(TradingExecutorClosePositionGrpcRequest) returns (TradingExecutorClosePositionGrpcResponse);
     rpc GetAccountActivePositions(TradingExecutorGetActivePositionsGrpcRequest) returns (stream TradingExecutorActivePositionGrpcModel);
     rpc UpdateSlTp(TradingExecutorUpdateSlTpGrpcRequest) returns (TradingExecutorUpdateSlTpGrpcResponse);
+    rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty);
  }

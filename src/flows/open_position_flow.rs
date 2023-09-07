@@ -5,7 +5,11 @@ use my_nosql_contracts::{
 };
 
 use crate::{
-    accounts_manager_grpc::AccountsManagerOperationResult,
+    a_book_bridge_grpc::{ABookBridgeOpenPositionGrpcRequest, ABookBridgePositionSide},
+    accounts_manager_grpc::{
+        AccountManagerGetClientAccountGrpcRequest, AccountManagerUpdateAccountBalanceGrpcRequest,
+        AccountsManagerOperationResult, UpdateBalanceReason,
+    },
     position_manager_grpc::PositionManagerOpenPositionGrpcRequest,
     trading_executor_grpc::{
         TradingExecutorActivePositionGrpcModel, TradingExecutorOpenPositionGrpcRequest,
@@ -33,8 +37,8 @@ pub async fn open_position(
     };
     let Some(target_account) = app
         .accounts_manager_grpc_client
-        .get_client_account(&request.trader_id, &request.account_id)
-        .await.account else{
+        .get_client_account( AccountManagerGetClientAccountGrpcRequest { trader_id: request.trader_id.clone(), account_id: request.account_id.clone() }, &my_telemetry::MyTelemetryContext::new())
+        .await.unwrap().account else{
             return Err(TradingExecutorError::AccountNotFound)
         };
 
@@ -58,30 +62,52 @@ pub async fn open_position(
     }
 
     if target_trading_profile.is_a_book {
-        app.a_book_bridge_grpc_client
-            .open_position(
-                &position_id,
-                &request.account_id,
-                request.leverage as f64,
-                request.invest_amount,
-                &request.asset_pair,
-                TradingExecutorPositionSide::from_i32(request.side).unwrap(),
-            )
-            .await?;
+        let side: ABookBridgePositionSide = TradingExecutorPositionSide::from_i32(request.side)
+            .unwrap()
+            .into();
+        let request = ABookBridgeOpenPositionGrpcRequest {
+            instrument_id: request.asset_pair.to_string(),
+            position_id: position_id.to_string(),
+            account_id: request.account_id.to_string(),
+            leverage: request.leverage as f64,
+            invest_amount: request.invest_amount,
+            side: side as i32,
+        };
+
+        let response = app
+            .a_book_bridge_grpc_client
+            .open_position(request, &my_telemetry::MyTelemetryContext::new())
+            .await
+            .unwrap();
+
+        let result = {
+            if response.status_code == 0 {
+                Ok(response.position.unwrap())
+            } else {
+                Err(TradingExecutorError::ABookReject)
+            }
+        };
     }
 
     let balance_update_result = app
         .accounts_manager_grpc_client
-        .update_client_balance(
-            &request.trader_id,
-            &request.account_id,
-            -request.invest_amount,
-            &request.process_id,
+        .update_client_account_balance(
+            AccountManagerUpdateAccountBalanceGrpcRequest {
+                trader_id: request.trader_id.clone(),
+                account_id: request.account_id.clone(),
+                delta: -request.invest_amount,
+                comment: "Open position balance charge".to_string(),
+                process_id: request.process_id.clone(),
+                allow_negative_balance: false,
+                reason: UpdateBalanceReason::TradingResult as i32,
+                reference_transaction_id: None,
+            },
+            &my_telemetry::MyTelemetryContext::new(),
         )
         .await;
 
     if AccountsManagerOperationResult::Ok
-        != AccountsManagerOperationResult::from_i32(balance_update_result.result).unwrap()
+        != AccountsManagerOperationResult::from_i32(balance_update_result.unwrap().result).unwrap()
     {
         return Err(TradingExecutorError::NotEnoughBalance);
     }
@@ -109,8 +135,14 @@ pub async fn open_position(
 
     let position = app
         .position_manager_grpc_client
-        .open_position(open_position_request)
-        .await?;
+        .open_position(
+            open_position_request,
+            &my_telemetry::MyTelemetryContext::new(),
+        )
+        .await
+        .unwrap();
+
+    let position = position.position.unwrap().into();
 
     return Ok(position);
 }
