@@ -16,6 +16,7 @@ use crate::{
     update_sl_tp, GrpcService,
 };
 use futures_core::Stream;
+use my_grpc_server_macros::with_telemetry;
 
 #[tonic::async_trait]
 impl TradingExecutorGrpcService for GrpcService {
@@ -28,6 +29,7 @@ impl TradingExecutorGrpcService for GrpcService {
         >,
     >;
 
+    #[with_telemetry]
     async fn open_position(
         &self,
         request: tonic::Request<TradingExecutorOpenPositionGrpcRequest>,
@@ -53,6 +55,7 @@ impl TradingExecutorGrpcService for GrpcService {
         Ok(tonic::Response::new(response))
     }
 
+    #[with_telemetry]
     async fn close_position(
         &self,
         request: tonic::Request<TradingExecutorClosePositionGrpcRequest>,
@@ -78,6 +81,7 @@ impl TradingExecutorGrpcService for GrpcService {
         Ok(tonic::Response::new(response))
     }
 
+    #[with_telemetry]
     async fn get_account_active_positions(
         &self,
         request: tonic::Request<TradingExecutorGetActivePositionsGrpcRequest>,
@@ -104,11 +108,13 @@ impl TradingExecutorGrpcService for GrpcService {
         my_grpc_extensions::grpc_server::send_vec_to_stream(positions, |x| x.into()).await
     }
 
+    #[with_telemetry]
     async fn update_sl_tp(
         &self,
         request: tonic::Request<TradingExecutorUpdateSlTpGrpcRequest>,
     ) -> Result<tonic::Response<TradingExecutorUpdateSlTpGrpcResponse>, tonic::Status> {
-        let update_sl_tp_result = update_sl_tp(&self.app, request.into_inner()).await;
+        let request = request.into_inner();
+        let update_sl_tp_result = update_sl_tp(&self.app, request).await;
 
         let response: TradingExecutorUpdateSlTpGrpcResponse = match update_sl_tp_result {
             Ok(position) => TradingExecutorUpdateSlTpGrpcResponse {

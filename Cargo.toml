@@ -35,6 +35,8 @@ serde_json = "*"
 serde_yaml = "*"
 serde_derive = "*"
 async-trait = "*"
+my-grpc-server-macros = { tag = "0.1.0", git = "https://github.com/MyJetTools/my-grpc-server-macros.git" }
+
 [build-dependencies]
 tonic-build = { version = "0.10.0", features = ["prost"] }
 ci-utils = { git = "https://github.com/MyJetTools/ci-utils.git", tag = "0.1.0" }
