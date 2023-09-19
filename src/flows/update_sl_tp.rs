@@ -1,7 +1,5 @@
 use std::sync::Arc;
 
-use my_nosql_contracts::{TradingGroupNoSqlEntity, TradingProfileNoSqlEntity};
-
 use crate::{
     accounts_manager_grpc::AccountManagerGetClientAccountGrpcRequest,
     position_manager_grpc::PositionManagerUpdateSlTpGrpcRequest,
@@ -10,28 +8,50 @@ use crate::{
     },
     AppContext, TradingExecutorError,
 };
+use my_nosql_contracts::{TradingGroupNoSqlEntity, TradingProfileNoSqlEntity};
+use service_sdk::my_telemetry;
 
 pub async fn update_sl_tp(
     app: &Arc<AppContext>,
     request: TradingExecutorUpdateSlTpGrpcRequest,
+    telemetry: &my_telemetry::MyTelemetryContext,
 ) -> Result<TradingExecutorActivePositionGrpcModel, TradingExecutorError> {
     let Some(target_account) = app
         .accounts_manager_grpc_client
-        .get_client_account(AccountManagerGetClientAccountGrpcRequest{
-            trader_id: request.trader_id.clone(),
-            account_id: request.account_id.clone()
-        }, &my_telemetry::MyTelemetryContext::new())
+        .get_client_account(
+            AccountManagerGetClientAccountGrpcRequest {
+                trader_id: request.trader_id.clone(),
+                account_id: request.account_id.clone(),
+            },
+            telemetry,
+        )
         .await
-        .unwrap().account else{
-            return Err(TradingExecutorError::AccountNotFound)
-        };
-
-    let Some(target_trading_group) = app.trading_groups_reader.get_entity(TradingGroupNoSqlEntity::generate_partition_key(), &target_account.trading_group).await else{
-        return Err(TradingExecutorError::TradingGroupNotFound)
+        .unwrap()
+        .account
+    else {
+        return Err(TradingExecutorError::AccountNotFound);
     };
 
-    let Some(_) = app.trading_profiles_reader.get_entity(TradingProfileNoSqlEntity::generate_partition_key(), &target_trading_group.trading_profile_id).await else{
-        return Err(TradingExecutorError::TradingProfileNotFound)
+    let Some(target_trading_group) = app
+        .trading_groups_reader
+        .get_entity(
+            TradingGroupNoSqlEntity::generate_partition_key(),
+            &target_account.trading_group,
+        )
+        .await
+    else {
+        return Err(TradingExecutorError::TradingGroupNotFound);
+    };
+
+    let Some(_) = app
+        .trading_profiles_reader
+        .get_entity(
+            TradingProfileNoSqlEntity::generate_partition_key(),
+            &target_trading_group.trading_profile_id,
+        )
+        .await
+    else {
+        return Err(TradingExecutorError::TradingProfileNotFound);
     };
 
     let pm_request = PositionManagerUpdateSlTpGrpcRequest {

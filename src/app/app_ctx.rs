@@ -1,11 +1,13 @@
 use std::sync::Arc;
 
-use my_grpc_extensions::GrpcClientSettings;
-use my_no_sql_tcp_reader::{MyNoSqlDataReader, MyNoSqlTcpConnection};
-use rust_extensions::AppStates;
+use service_sdk::{
+    my_grpc_extensions::GrpcClientSettings, my_no_sql_sdk::reader::MyNoSqlDataReader,
+    ServiceContext,
+};
 
 use crate::{
     ABookBridgeGrpcClient, AccountsManagerGrpcClient, PositionManagerGrpcClient, SettingsModel,
+    SettingsReader,
 };
 use my_nosql_contracts::{
     TradingGroupNoSqlEntity, TradingInstrumentNoSqlEntity, TradingProfileNoSqlEntity,
@@ -15,18 +17,23 @@ pub const APP_VERSION: &'static str = env!("CARGO_PKG_VERSION");
 pub const APP_NAME: &'static str = env!("CARGO_PKG_NAME");
 
 pub struct AppContext {
-    pub app_states: Arc<AppStates>,
     pub position_manager_grpc_client: Arc<PositionManagerGrpcClient>,
     pub accounts_manager_grpc_client: Arc<AccountsManagerGrpcClient>,
     pub a_book_bridge_grpc_client: Arc<ABookBridgeGrpcClient>,
-    pub trading_instruments_reader: Arc<MyNoSqlDataReader<TradingInstrumentNoSqlEntity>>,
-    pub trading_groups_reader: Arc<MyNoSqlDataReader<TradingGroupNoSqlEntity>>,
-    pub trading_profiles_reader: Arc<MyNoSqlDataReader<TradingProfileNoSqlEntity>>,
-    pub my_no_sql_connection: MyNoSqlTcpConnection,
+    pub trading_instruments_reader:
+        Arc<dyn MyNoSqlDataReader<TradingInstrumentNoSqlEntity> + Send + Sync + 'static>,
+    pub trading_groups_reader:
+        Arc<dyn MyNoSqlDataReader<TradingGroupNoSqlEntity> + Send + Sync + 'static>,
+    pub trading_profiles_reader:
+        Arc<dyn MyNoSqlDataReader<TradingProfileNoSqlEntity> + Send + Sync + 'static>,
 }
 
 impl AppContext {
-    pub async fn new(settings: Arc<SettingsModel>) -> AppContext {
+    pub async fn new(
+        settings: Arc<SettingsReader>,
+        service_context: &ServiceContext,
+    ) -> AppContext {
+        let settings = settings.get_settings().await;
         let position_manager_grpc_client = Arc::new(PositionManagerGrpcClient::new(
             GrpcSettings::new_arc(settings.position_manager_grpc.to_string()),
         ));
@@ -39,14 +46,9 @@ impl AppContext {
             GrpcSettings::new_arc(settings.a_book_bridge_grpc.to_string()),
         ));
 
-        let my_no_sql_connection = my_no_sql_tcp_reader::MyNoSqlTcpConnection::new(
-            format!("{}:{}", crate::app::APP_NAME, crate::app::APP_VERSION),
-            settings.clone(),
-        );
-
-        let trading_instruments_reader = my_no_sql_connection.get_reader().await;
-        let trading_groups_reader = my_no_sql_connection.get_reader().await;
-        let trading_profiles_reader = my_no_sql_connection.get_reader().await;
+        let trading_instruments_reader = service_context.get_ns_reader().await;
+        let trading_groups_reader = service_context.get_ns_reader().await;
+        let trading_profiles_reader = service_context.get_ns_reader().await;
 
         AppContext {
             position_manager_grpc_client,
@@ -54,8 +56,6 @@ impl AppContext {
             trading_instruments_reader,
             trading_groups_reader,
             trading_profiles_reader,
-            my_no_sql_connection,
-            app_states: Arc::new(AppStates::create_initialized()),
             a_book_bridge_grpc_client,
         }
     }

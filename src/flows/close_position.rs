@@ -11,23 +11,43 @@ use crate::{
     },
     AppContext, TradingExecutorError,
 };
+use service_sdk::my_telemetry;
 
 pub async fn close_position(
     app: &Arc<AppContext>,
     request: TradingExecutorClosePositionGrpcRequest,
+    telemetry_context: &my_telemetry::MyTelemetryContext,
 ) -> Result<TradingExecutorClosedPositionGrpcModel, TradingExecutorError> {
     let Some(_) = app
         .accounts_manager_grpc_client
-        .get_client_account( crate::accounts_manager_grpc::AccountManagerGetClientAccountGrpcRequest { trader_id: request.trader_id.clone(), account_id: request.account_id.clone() }, &my_telemetry::MyTelemetryContext::new())
-        .await.unwrap().account else{
-            return Err(TradingExecutorError::AccountNotFound)
-        };
+        .get_client_account(
+            crate::accounts_manager_grpc::AccountManagerGetClientAccountGrpcRequest {
+                trader_id: request.trader_id.clone(),
+                account_id: request.account_id.clone(),
+            },
+            &telemetry_context,
+        )
+        .await
+        .unwrap()
+        .account
+    else {
+        return Err(TradingExecutorError::AccountNotFound);
+    };
 
-    let Some(target_position) = app.position_manager_grpc_client.get_active_position(PositionManagerGetActivePositionGrpcRequest{
-        trader_id: request.trader_id.clone(),
-        account_id: request.account_id.clone(),
-        position_id: request.position_id.clone(),
-    }, &my_telemetry::MyTelemetryContext::new()).await.unwrap().position else{
+    let Some(target_position) = app
+        .position_manager_grpc_client
+        .get_active_position(
+            PositionManagerGetActivePositionGrpcRequest {
+                trader_id: request.trader_id.clone(),
+                account_id: request.account_id.clone(),
+                position_id: request.position_id.clone(),
+            },
+            telemetry_context,
+        )
+        .await
+        .unwrap()
+        .position
+    else {
         return Err(TradingExecutorError::PositionNotFound);
     };
 
@@ -39,8 +59,8 @@ pub async fn close_position(
         )
         .await;
 
-    let Some(_) = target_instrument else{
-        return Err(TradingExecutorError::InstrumentNotFound)
+    let Some(_) = target_instrument else {
+        return Err(TradingExecutorError::InstrumentNotFound);
     };
 
     let close_result = app
@@ -52,7 +72,7 @@ pub async fn close_position(
                 account_id: request.account_id,
                 trader_id: request.trader_id,
             },
-            &my_telemetry::MyTelemetryContext::new(),
+            telemetry_context,
         )
         .await;
 

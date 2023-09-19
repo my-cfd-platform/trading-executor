@@ -17,17 +17,3 @@ impl GrpcService {
         Self { app }
     }
 }
-
-pub async fn start_grpc_server(app: Arc<AppContext>, port: u16) {
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-
-    let service = GrpcService::new(app.clone());
-
-    println!("Listening to {:?} as grpc endpoint", addr);
-
-    Server::builder()
-        .add_service(TradingExecutorGrpcServiceServer::new(service.clone()))
-        .serve(addr)
-        .await
-        .unwrap();
-}

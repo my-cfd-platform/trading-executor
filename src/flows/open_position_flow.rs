@@ -3,7 +3,7 @@ use std::sync::Arc;
 use my_nosql_contracts::{
     TradingGroupNoSqlEntity, TradingInstrumentNoSqlEntity, TradingProfileNoSqlEntity,
 };
-
+use service_sdk::my_telemetry;
 use crate::{
     a_book_bridge_grpc::{ABookBridgeOpenPositionGrpcRequest, ABookBridgePositionSide},
     accounts_manager_grpc::{
@@ -21,6 +21,7 @@ use crate::{
 pub async fn open_position(
     app: &Arc<AppContext>,
     request: TradingExecutorOpenPositionGrpcRequest,
+    telemetry_context: &my_telemetry::MyTelemetryContext,
 ) -> Result<TradingExecutorActivePositionGrpcModel, TradingExecutorError> {
     let position_id = uuid::Uuid::new_v4().to_string();
 
@@ -37,7 +38,7 @@ pub async fn open_position(
     };
     let Some(target_account) = app
         .accounts_manager_grpc_client
-        .get_client_account( AccountManagerGetClientAccountGrpcRequest { trader_id: request.trader_id.clone(), account_id: request.account_id.clone() }, &my_telemetry::MyTelemetryContext::new())
+        .get_client_account( AccountManagerGetClientAccountGrpcRequest { trader_id: request.trader_id.clone(), account_id: request.account_id.clone() }, telemetry_context)
         .await.unwrap().account else{
             return Err(TradingExecutorError::AccountNotFound)
         };
@@ -76,7 +77,7 @@ pub async fn open_position(
 
         let response = app
             .a_book_bridge_grpc_client
-            .open_position(request, &my_telemetry::MyTelemetryContext::new())
+            .open_position(request, telemetry_context)
             .await
             .unwrap();
 
@@ -137,7 +138,7 @@ pub async fn open_position(
         .position_manager_grpc_client
         .open_position(
             open_position_request,
-            &my_telemetry::MyTelemetryContext::new(),
+            telemetry_context,
         )
         .await
         .unwrap();

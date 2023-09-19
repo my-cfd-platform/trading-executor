@@ -1,10 +1,6 @@
-use std::pin::Pin;
-
 use crate::{
     close_position, open_position,
-    position_manager_grpc::{
-        PositionManagerGetActivePositionGrpcRequest, PositionManagerGetActivePositionsGrpcRequest,
-    },
+    position_manager_grpc::PositionManagerGetActivePositionsGrpcRequest,
     trading_executor_grpc::{
         trading_executor_grpc_service_server::TradingExecutorGrpcService,
         TradingExecutorActivePositionGrpcModel, TradingExecutorClosePositionGrpcRequest,
@@ -15,8 +11,10 @@ use crate::{
     },
     update_sl_tp, GrpcService,
 };
-use futures_core::Stream;
-use my_grpc_server_macros::with_telemetry;
+use my_grpc_extensions::prelude::Stream;
+use my_grpc_extensions::server::with_telemetry;
+use service_sdk::{my_grpc_extensions, my_telemetry::MyTelemetryContext};
+use std::pin::Pin;
 
 #[tonic::async_trait]
 impl TradingExecutorGrpcService for GrpcService {
@@ -36,7 +34,8 @@ impl TradingExecutorGrpcService for GrpcService {
     ) -> Result<tonic::Response<TradingExecutorOpenPositionGrpcResponse>, tonic::Status> {
         let request = request.into_inner();
 
-        let open_position_result = open_position(&self.app, request).await;
+        let open_position_result =
+            open_position(&self.app, request, my_telemetry).await;
 
         let response = match open_position_result {
             Ok(position) => TradingExecutorOpenPositionGrpcResponse {
@@ -55,14 +54,14 @@ impl TradingExecutorGrpcService for GrpcService {
         Ok(tonic::Response::new(response))
     }
 
-    #[with_telemetry]
     async fn close_position(
         &self,
         request: tonic::Request<TradingExecutorClosePositionGrpcRequest>,
     ) -> Result<tonic::Response<TradingExecutorClosePositionGrpcResponse>, tonic::Status> {
         let request = request.into_inner();
 
-        let open_position_result = close_position(&self.app, request).await;
+        let open_position_result =
+            close_position(&self.app, request, &MyTelemetryContext::new()).await;
 
         let response = match open_position_result {
             Ok(position) => TradingExecutorClosePositionGrpcResponse {
@@ -95,7 +94,7 @@ impl TradingExecutorGrpcService for GrpcService {
                     trader_id: request.trader_id.clone(),
                     account_id: request.account_id.clone(),
                 },
-                &my_telemetry::MyTelemetryContext::new(),
+                &my_telemetry,
             )
             .await
             .unwrap();
@@ -114,7 +113,7 @@ impl TradingExecutorGrpcService for GrpcService {
         request: tonic::Request<TradingExecutorUpdateSlTpGrpcRequest>,
     ) -> Result<tonic::Response<TradingExecutorUpdateSlTpGrpcResponse>, tonic::Status> {
         let request = request.into_inner();
-        let update_sl_tp_result = update_sl_tp(&self.app, request).await;
+        let update_sl_tp_result = update_sl_tp(&self.app, request, my_telemetry).await;
 
         let response: TradingExecutorUpdateSlTpGrpcResponse = match update_sl_tp_result {
             Ok(position) => TradingExecutorUpdateSlTpGrpcResponse {
