@@ -54,6 +54,7 @@ impl TradingExecutorGrpcService for GrpcService {
         Ok(tonic::Response::new(response))
     }
 
+    #[with_telemetry]
     async fn close_position(
         &self,
         request: tonic::Request<TradingExecutorClosePositionGrpcRequest>,
