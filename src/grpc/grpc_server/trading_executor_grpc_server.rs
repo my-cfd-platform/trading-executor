@@ -62,7 +62,7 @@ impl TradingExecutorGrpcService for GrpcService {
         let request = request.into_inner();
 
         let open_position_result =
-            close_position(&self.app, request, &MyTelemetryContext::new()).await;
+            close_position(&self.app, request, my_telemetry).await;
 
         let response = match open_position_result {
             Ok(position) => TradingExecutorClosePositionGrpcResponse {
