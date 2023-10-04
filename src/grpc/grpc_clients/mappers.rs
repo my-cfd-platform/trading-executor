@@ -2,14 +2,38 @@ use crate::{
     a_book_bridge_grpc::ABookBridgePositionSide,
     position_manager_grpc::{
         PositionManagerActivePositionGrpcModel, PositionManagerBidAsk,
-        PositionManagerClosedPositionGrpcModel,
+        PositionManagerClosedPositionGrpcModel, PositionManagerPendingPositionGrpcModel,
     },
     trading_executor_grpc::{
         TradingExecutorActivePositionGrpcModel, TradingExecutorBidAsk,
-        TradingExecutorClosedPositionGrpcModel, TradingExecutorPositionSide,
+        TradingExecutorClosedPositionGrpcModel, TradingExecutorPositionSide, TradingExecutorPendingPositionGrpcModel,
     },
     TradingExecutorError,
 };
+
+impl Into<TradingExecutorPendingPositionGrpcModel> for PositionManagerPendingPositionGrpcModel {
+    fn into(self) -> TradingExecutorPendingPositionGrpcModel {
+        TradingExecutorPendingPositionGrpcModel{
+            id: self.id,
+            trader_id: self.trader_id,
+            account_id: self.account_id,
+            asset_pair: self.asset_pair,
+            side: self.side,
+            invest_amount: self.invest_amount,
+            leverage: self.leverage,
+            stop_out_percent: self.stop_out_percent,
+            create_process_id: self.create_process_id,
+            create_date_unix_timestamp_milis: self.create_date_unix_timestamp_milis,
+            last_update_process_id: self.last_update_process_id,
+            last_update_date: self.last_update_date,
+            tp_in_profit: self.tp_in_profit,
+            sl_in_profit: self.sl_in_profit,
+            tp_in_asset_price: self.tp_in_asset_price,
+            sl_in_asset_price: self.sl_in_asset_price,
+            desire_price: self.desire_price,
+        }
+    }
+}
 
 impl Into<TradingExecutorActivePositionGrpcModel> for PositionManagerActivePositionGrpcModel {
     fn into(self) -> TradingExecutorActivePositionGrpcModel {

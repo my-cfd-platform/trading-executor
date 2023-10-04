@@ -86,6 +86,26 @@ message TradingExecutorActivePositionGrpcModel{
     double Profit = 21;
 }
 
+message TradingExecutorPendingPositionGrpcModel{
+    string Id = 1;
+    string TraderId = 2;
+    string AccountId = 3;
+    string AssetPair = 4;
+    TradingExecutorPositionSide Side = 5;
+    double InvestAmount = 6;
+    double Leverage = 7;
+    double StopOutPercent = 8;
+    string CreateProcessId = 9;
+    uint64 CreateDateUnixTimestampMilis = 10;
+    string LastUpdateProcessId = 11;
+    uint64 LastUpdateDate = 12;
+    optional double TpInProfit = 13;
+    optional double SlInProfit = 14;
+    optional double TpInAssetPrice = 15;
+    optional double SlInAssetPrice = 16;
+    double DesirePrice = 17;
+}
+
 message TradingExecutorOpenPositionGrpcResponse{
     TradingExecutorOperationsCodes Status = 1;
     optional TradingExecutorActivePositionGrpcModel Positon = 2;
@@ -150,10 +170,50 @@ message TradingExecutorUpdateSlTpGrpcResponse{
     optional TradingExecutorActivePositionGrpcModel Position = 2;
 }
 
+message TradingExecutorOpenPendingPositionGrpcResponse{
+    TradingExecutorOperationsCodes Status = 1;
+    optional TradingExecutorPendingPositionGrpcModel Position = 2;
+}
+
+message TradingExecutorCancelPendingPositionGrpcResponse{
+    TradingExecutorOperationsCodes Status = 1;
+    optional TradingExecutorPendingPositionGrpcModel Position = 2;
+}
+
+
+message TradingExecutorOpenPendingGrpcRequest{
+    string AssetPair = 1;
+    TradingExecutorPositionSide Side = 2;
+    double InvestAmount = 3;
+    int32 Leverage = 4;
+    string ProcessId = 5;
+    optional double TpInProfit = 6;
+    optional double SlInProfit = 7;
+    optional double TpInAssetPrice = 8;
+    optional double SlInAssetPrice = 9;
+    string AccountId = 10;
+    string TraderId = 11;
+    double DesirePrice = 12;
+}
+
+message TradingExecutorCancelPendingGrpcRequest{
+    string AccountId = 1;
+    string TraderId = 2;
+    string PositionId = 3;
+}
+
+message TradingExecutorGetAccountPendingPositionGrpcRequest{
+    string AccountId = 1;
+    string TraderId = 2;
+}
+
 service TradingExecutorGrpcService {
     rpc OpenPosition(TradingExecutorOpenPositionGrpcRequest) returns (TradingExecutorOpenPositionGrpcResponse);
     rpc ClosePosition(TradingExecutorClosePositionGrpcRequest) returns (TradingExecutorClosePositionGrpcResponse);
     rpc GetAccountActivePositions(TradingExecutorGetActivePositionsGrpcRequest) returns (stream TradingExecutorActivePositionGrpcModel);
     rpc UpdateSlTp(TradingExecutorUpdateSlTpGrpcRequest) returns (TradingExecutorUpdateSlTpGrpcResponse);
+    rpc SetPendingPosition(TradingExecutorOpenPendingGrpcRequest) returns (TradingExecutorOpenPendingPositionGrpcResponse);
+    rpc CancelPendingPosition(TradingExecutorCancelPendingGrpcRequest) returns (TradingExecutorCancelPendingPositionGrpcResponse);
+    rpc GetAccountPendingPositions(TradingExecutorGetAccountPendingPositionGrpcRequest) returns (stream TradingExecutorPendingPositionGrpcModel);
     rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty);
  }

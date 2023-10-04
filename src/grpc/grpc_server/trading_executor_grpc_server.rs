@@ -1,12 +1,19 @@
 use crate::{
-    close_position, open_position,
-    position_manager_grpc::PositionManagerGetActivePositionsGrpcRequest,
+    cancel_pending, close_position, open_limit, open_position,
+    position_manager_grpc::{
+        PositionManagerGetActivePositionsGrpcRequest, PositionManagerGetPendingPositionGrpcRequest,
+        PositionManagerGetPendingPositionsGrpcRequest,
+    },
     trading_executor_grpc::{
         trading_executor_grpc_service_server::TradingExecutorGrpcService,
-        TradingExecutorActivePositionGrpcModel, TradingExecutorClosePositionGrpcRequest,
-        TradingExecutorClosePositionGrpcResponse, TradingExecutorGetActivePositionsGrpcRequest,
-        TradingExecutorOpenPositionGrpcRequest, TradingExecutorOpenPositionGrpcResponse,
-        TradingExecutorOperationsCodes, TradingExecutorUpdateSlTpGrpcRequest,
+        TradingExecutorActivePositionGrpcModel, TradingExecutorCancelPendingGrpcRequest,
+        TradingExecutorCancelPendingPositionGrpcResponse, TradingExecutorClosePositionGrpcRequest,
+        TradingExecutorClosePositionGrpcResponse,
+        TradingExecutorGetAccountPendingPositionGrpcRequest,
+        TradingExecutorGetActivePositionsGrpcRequest, TradingExecutorOpenPendingGrpcRequest,
+        TradingExecutorOpenPendingPositionGrpcResponse, TradingExecutorOpenPositionGrpcRequest,
+        TradingExecutorOpenPositionGrpcResponse, TradingExecutorOperationsCodes,
+        TradingExecutorPendingPositionGrpcModel, TradingExecutorUpdateSlTpGrpcRequest,
         TradingExecutorUpdateSlTpGrpcResponse,
     },
     update_sl_tp, GrpcService,
@@ -27,6 +34,15 @@ impl TradingExecutorGrpcService for GrpcService {
         >,
     >;
 
+    type GetAccountPendingPositionsStream = Pin<
+        Box<
+            dyn Stream<Item = Result<TradingExecutorPendingPositionGrpcModel, tonic::Status>>
+                + Send
+                + Sync
+                + 'static,
+        >,
+    >;
+
     #[with_telemetry]
     async fn open_position(
         &self,
@@ -34,8 +50,7 @@ impl TradingExecutorGrpcService for GrpcService {
     ) -> Result<tonic::Response<TradingExecutorOpenPositionGrpcResponse>, tonic::Status> {
         let request = request.into_inner();
 
-        let open_position_result =
-            open_position(&self.app, request, my_telemetry).await;
+        let open_position_result = open_position(&self.app, request, my_telemetry).await;
 
         let response = match open_position_result {
             Ok(position) => TradingExecutorOpenPositionGrpcResponse {
@@ -61,8 +76,7 @@ impl TradingExecutorGrpcService for GrpcService {
     ) -> Result<tonic::Response<TradingExecutorClosePositionGrpcResponse>, tonic::Status> {
         let request = request.into_inner();
 
-        let open_position_result =
-            close_position(&self.app, request, my_telemetry).await;
+        let open_position_result = close_position(&self.app, request, my_telemetry).await;
 
         let response = match open_position_result {
             Ok(position) => TradingExecutorClosePositionGrpcResponse {
@@ -79,6 +93,85 @@ impl TradingExecutorGrpcService for GrpcService {
         };
 
         Ok(tonic::Response::new(response))
+    }
+
+    #[with_telemetry]
+    async fn set_pending_position(
+        &self,
+        request: tonic::Request<TradingExecutorOpenPendingGrpcRequest>,
+    ) -> Result<tonic::Response<TradingExecutorOpenPendingPositionGrpcResponse>, tonic::Status>
+    {
+        let request = request.into_inner();
+
+        let result = open_limit(&self.app, request, my_telemetry).await;
+
+        let response = match result {
+            Ok(position) => TradingExecutorOpenPendingPositionGrpcResponse {
+                status: 0,
+                position: Some(position),
+            },
+            Err(error) => {
+                let error: TradingExecutorOperationsCodes = error.into();
+                TradingExecutorOpenPendingPositionGrpcResponse {
+                    status: error.into(),
+                    position: None,
+                }
+            }
+        };
+        Ok(tonic::Response::new(response))
+    }
+
+    #[with_telemetry]
+    async fn cancel_pending_position(
+        &self,
+        request: tonic::Request<TradingExecutorCancelPendingGrpcRequest>,
+    ) -> Result<tonic::Response<TradingExecutorCancelPendingPositionGrpcResponse>, tonic::Status>
+    {
+        let request = request.into_inner();
+        let result = cancel_pending(&self.app, request, my_telemetry).await;
+
+        let response = match result {
+            Ok(position) => TradingExecutorCancelPendingPositionGrpcResponse {
+                status: 0,
+                position: Some(position),
+            },
+            Err(error) => {
+                let error: TradingExecutorOperationsCodes = error.into();
+                TradingExecutorCancelPendingPositionGrpcResponse {
+                    status: error.into(),
+                    position: None,
+                }
+            }
+        };
+        Ok(tonic::Response::new(response))
+    }
+
+    #[with_telemetry]
+    async fn get_account_pending_positions(
+        &self,
+        request: tonic::Request<TradingExecutorGetAccountPendingPositionGrpcRequest>,
+    ) -> Result<tonic::Response<Self::GetAccountPendingPositionsStream>, tonic::Status> {
+        let request = request.into_inner();
+
+        let positions = self
+            .app
+            .position_manager_grpc_client
+            .get_account_pending_positions(
+                PositionManagerGetPendingPositionsGrpcRequest {
+                    trader_id: request.trader_id,
+                    account_id: request.account_id,
+                },
+                my_telemetry,
+            )
+            .await
+            .unwrap();
+
+        let positions = match positions {
+            Some(src) => src,
+            None => vec![],
+        };
+
+        my_grpc_extensions::grpc_server::send_vec_to_stream(positions, |x| x.into()).await
     }
 
     #[with_telemetry]
