@@ -59,6 +59,10 @@ impl Into<TradingExecutorActivePositionGrpcModel> for PositionManagerActivePosit
             open_process_id: self.open_process_id,
             open_date: self.open_date,
             profit: self.profit,
+            base: self.base,
+            quote: self.quote,
+            collateral: self.collateral,
+            base_collateral_open_price: self.base_collateral_open_price
         }
     }
 }

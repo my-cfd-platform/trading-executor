@@ -109,6 +109,10 @@ message PositionManagerActivePositionGrpcModel{
     string OpenProcessId = 19;
     uint64 OpenDate = 20;
     double Profit = 21;
+    string Base = 22;
+    string Quote = 23;
+    string Collateral = 24;
+    double BaseCollateralOpenPrice = 25;
 }
 
 message PositionManagerPendingPositionGrpcModel{
@@ -201,6 +205,11 @@ message PositionManagerGetActivePositionGrpcResponse{
     optional PositionManagerActivePositionGrpcModel Position = 2;
 }
 
+message PositionManagerGetPendingPositionGrpcResponse{
+    PositionManagerOperationsCodes Status = 1;
+    optional PositionManagerPendingPositionGrpcModel Position = 2;
+}
+
 message PositionManagerUpdateSlTpGrpcRequest{
     string PositionId = 1;
     string AccountId = 3;
@@ -233,13 +242,13 @@ message PositionManagerChargeSwapGrpcResponse{
 service PositionManagerGrpcService {
     rpc OpenPosition(position_manager.PositionManagerOpenPositionGrpcRequest) returns (position_manager.PositionManagerOpenPositionGrpcResponse);
     rpc ClosePosition(position_manager.PositionManagerClosePositionGrpcRequest) returns (position_manager.PositionManagerClosePositionGrpcResponse);
-    rpc CancelPending(position_manager.PositionManagerCancelPendingGrpcRequest) returns (position_manager.PositionManagerCancelPendingGrpcResponse);
-    rpc OpenPending(position_manager.PositionManagerOpenPendingGrpcRequest) returns (position_manager.PositionManagerOpenPendingGrpcResponse);
-    rpc GetAccountActivePositions(position_manager.PositionManagerGetActivePositionsGrpcRequest) returns (stream PositionManagerActivePositionGrpcModel);
-    rpc GetAccountPendingPositions(position_manager.PositionManagerGetPendingPositionsGrpcRequest) returns (stream PositionManagerPendingPositionGrpcModel);
-    rpc GetActivePosition(position_manager.PositionManagerGetActivePositionGrpcRequest) returns (PositionManagerGetActivePositionGrpcResponse);
-    rpc GetPendingPosition(position_manager.PositionManagerGetPendingPositionGrpcRequest) returns (PositionManagerPendingPositionGrpcModel);
     rpc UpdateSlTp(position_manager.PositionManagerUpdateSlTpGrpcRequest) returns (PositionManagerUpdateSlTpGrpcResponse);
     rpc ChargeSwap(position_manager.PositionManagerChargeSwapGrpcRequest) returns (PositionManagerChargeSwapGrpcResponse);
+    rpc GetActivePosition(position_manager.PositionManagerGetActivePositionGrpcRequest) returns (PositionManagerGetActivePositionGrpcResponse);
+    rpc GetAccountActivePositions(position_manager.PositionManagerGetActivePositionsGrpcRequest) returns (stream PositionManagerActivePositionGrpcModel);
+    rpc OpenPending(position_manager.PositionManagerOpenPendingGrpcRequest) returns (position_manager.PositionManagerOpenPendingGrpcResponse);
+    rpc CancelPending(position_manager.PositionManagerCancelPendingGrpcRequest) returns (position_manager.PositionManagerCancelPendingGrpcResponse);
+    rpc GetPendingPosition(position_manager.PositionManagerGetPendingPositionGrpcRequest) returns (PositionManagerGetPendingPositionGrpcResponse);
+    rpc GetAccountPendingPositions(position_manager.PositionManagerGetPendingPositionsGrpcRequest) returns (stream PositionManagerPendingPositionGrpcModel);
     rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty);
  }
