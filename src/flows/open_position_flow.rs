@@ -100,7 +100,7 @@ pub async fn open_position(
 
     //open delay
     println!("Open delay: {} ms", delay);
-    sleep(Duration::from_micros(delay as u64)).await;
+    sleep(Duration::from_millis(delay as u64)).await;
 
     if target_trading_profile.is_a_book {
         let side: ABookBridgePositionSide = request.side().into();
