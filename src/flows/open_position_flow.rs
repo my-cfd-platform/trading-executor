@@ -99,6 +99,7 @@ pub async fn open_position(
     .await;
 
     //open delay
+    println!("Open delay: {} ms", delay);
     sleep(Duration::from_micros(delay as u64)).await;
 
     if target_trading_profile.is_a_book {
