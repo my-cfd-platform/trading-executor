@@ -3,17 +3,19 @@ use crate::{
     position_manager_grpc::{
         PositionManagerActivePositionGrpcModel, PositionManagerBidAsk,
         PositionManagerClosedPositionGrpcModel, PositionManagerPendingPositionGrpcModel,
+        PositionManagerSwapGrpcModel,
     },
     trading_executor_grpc::{
         TradingExecutorActivePositionGrpcModel, TradingExecutorBidAsk,
-        TradingExecutorClosedPositionGrpcModel, TradingExecutorPositionSide, TradingExecutorPendingPositionGrpcModel,
+        TradingExecutorClosedPositionGrpcModel, TradingExecutorPendingPositionGrpcModel,
+        TradingExecutorPositionSide, TradingExecutorSwapGrpcModel,
     },
     TradingExecutorError,
 };
 
 impl Into<TradingExecutorPendingPositionGrpcModel> for PositionManagerPendingPositionGrpcModel {
     fn into(self) -> TradingExecutorPendingPositionGrpcModel {
-        TradingExecutorPendingPositionGrpcModel{
+        TradingExecutorPendingPositionGrpcModel {
             id: self.id,
             trader_id: self.trader_id,
             account_id: self.account_id,
@@ -62,7 +64,8 @@ impl Into<TradingExecutorActivePositionGrpcModel> for PositionManagerActivePosit
             base: self.base,
             quote: self.quote,
             collateral: self.collateral,
-            base_collateral_open_price: self.base_collateral_open_price
+            base_collateral_open_price: self.base_collateral_open_price,
+            swaps: self.swaps.iter().map(|x| x.to_owned().into()).collect(),
         }
     }
 }
@@ -93,6 +96,16 @@ impl Into<TradingExecutorClosedPositionGrpcModel> for PositionManagerClosedPosit
             close_bid_ask: Some(self.close_bid_ask.unwrap().into()),
             close_process_id: self.close_process_id,
             close_reason: self.close_reason,
+            swaps: self.swaps.iter().map(|x| x.to_owned().into()).collect(),
+        }
+    }
+}
+
+impl Into<TradingExecutorSwapGrpcModel> for PositionManagerSwapGrpcModel {
+    fn into(self) -> TradingExecutorSwapGrpcModel {
+        TradingExecutorSwapGrpcModel {
+            amount: self.swap_amount,
+            swap_charge_date: self.date_time_unix_timestamp_milis as u32,
         }
     }
 }

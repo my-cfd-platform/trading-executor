@@ -1,11 +1,6 @@
-use std::{net::SocketAddr, sync::Arc};
+use std::sync::Arc;
 
-use tonic::transport::Server;
-
-use crate::{
-    trading_executor_grpc::trading_executor_grpc_service_server::TradingExecutorGrpcServiceServer,
-    AppContext,
-};
+use crate::AppContext;
 
 #[derive(Clone)]
 pub struct GrpcService {

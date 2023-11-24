@@ -8,8 +8,7 @@ use service_sdk::my_telemetry::MyTelemetryContext;
 use crate::{
     accounts_manager_grpc::AccountManagerGetClientAccountGrpcRequest,
     position_manager_grpc::{
-        PositionManagerCancelPendingGrpcRequest, PositionManagerClosePositionGrpcRequest,
-        PositionManagerOpenPendingGrpcRequest,
+        PositionManagerCancelPendingGrpcRequest, PositionManagerOpenPendingGrpcRequest,
     },
     trading_executor_grpc::{
         TradingExecutorCancelPendingGrpcRequest, TradingExecutorOpenPendingGrpcRequest,
@@ -116,8 +115,6 @@ pub async fn open_limit(
         .open_pending(open_position_request, telemetry_context)
         .await
         .unwrap();
-
-
 
     let position = position
         .position

@@ -1,8 +1,7 @@
 use crate::{
     cancel_pending, close_position, open_limit, open_position,
     position_manager_grpc::{
-        PositionManagerGetActivePositionsGrpcRequest, PositionManagerGetPendingPositionGrpcRequest,
-        PositionManagerGetPendingPositionsGrpcRequest,
+        PositionManagerGetActivePositionsGrpcRequest, PositionManagerGetPendingPositionsGrpcRequest,
     },
     trading_executor_grpc::{
         trading_executor_grpc_service_server::TradingExecutorGrpcService,
@@ -43,13 +42,14 @@ impl TradingExecutorGrpcService for GrpcService {
         >,
     >;
 
-    #[with_telemetry]
+    // #[with_telemetry]
     async fn open_position(
         &self,
         request: tonic::Request<TradingExecutorOpenPositionGrpcRequest>,
     ) -> Result<tonic::Response<TradingExecutorOpenPositionGrpcResponse>, tonic::Status> {
         let request = request.into_inner();
-
+        
+        let my_telemetry = &service_sdk::my_telemetry::MyTelemetryContext::new();
         let open_position_result = open_position(&self.app, request, my_telemetry).await;
 
         let response = match open_position_result {
@@ -171,7 +171,7 @@ impl TradingExecutorGrpcService for GrpcService {
             None => vec![],
         };
 
-        my_grpc_extensions::grpc_server::send_vec_to_stream(positions, |x| x.into()).await
+        my_grpc_extensions::grpc_server::send_vec_to_stream(positions.into_iter(), |x| x.into()).await
     }
 
     #[with_telemetry]
@@ -198,7 +198,7 @@ impl TradingExecutorGrpcService for GrpcService {
             None => vec![],
         };
 
-        my_grpc_extensions::grpc_server::send_vec_to_stream(positions, |x| x.into()).await
+        my_grpc_extensions::grpc_server::send_vec_to_stream(positions.into_iter(), |x| x.into()).await
     }
 
     #[with_telemetry]
@@ -228,7 +228,7 @@ impl TradingExecutorGrpcService for GrpcService {
 
     async fn ping(
         &self,
-        request: tonic::Request<()>,
+        _: tonic::Request<()>,
     ) -> Result<tonic::Response<()>, tonic::Status> {
         return Ok(tonic::Response::new(()));
     }

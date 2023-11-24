@@ -6,16 +6,16 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-my-nosql-contracts = { tag = "0.1.18", git = "https://github.com/my-cfd-platform/my-nosql-contracts.git" }
+my-nosql-contracts = { tag = "0.1.23", git = "https://github.com/my-cfd-platform/my-nosql-contracts.git" }
 
-service-sdk = { git = "https://github.com/MyJetTools/service-sdk.git", tag = "0.2.3", features = [
+service-sdk = { git = "https://github.com/MyJetTools/service-sdk.git", tag = "0.2.4", features = [
     "grpc",
     "my-nosql-data-reader-sdk",
     "macros",
 ] }
-rust-extensions = { tag = "0.1.3", git = "https://github.com/MyJetTools/rust-extensions.git" }
+rust-extensions = { tag = "0.1.4", git = "https://github.com/MyJetTools/rust-extensions.git" }
 
-
+rand = "*"
 uuid = { version = "*", features = ["v4"] }
 tonic = { version = "*", features = ["tls", "tls-roots", "prost"] }
 chrono = "*"

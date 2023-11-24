@@ -6,8 +6,7 @@ use service_sdk::{
 };
 
 use crate::{
-    ABookBridgeGrpcClient, AccountsManagerGrpcClient, PositionManagerGrpcClient, SettingsModel,
-    SettingsReader,
+    ABookBridgeGrpcClient, AccountsManagerGrpcClient, PositionManagerGrpcClient, SettingsReader,
 };
 use my_nosql_contracts::{
     TradingGroupNoSqlEntity, TradingInstrumentNoSqlEntity, TradingProfileNoSqlEntity,
@@ -71,7 +70,7 @@ impl GrpcSettings {
 
 #[tonic::async_trait]
 impl GrpcClientSettings for GrpcSettings {
-    async fn get_grpc_url(&self, name: &'static str) -> String {
+    async fn get_grpc_url(&self, _: &'static str) -> String {
         self.0.clone()
     }
 }

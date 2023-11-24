@@ -1,4 +1,7 @@
-use std::sync::Arc;
+use chrono::{Datelike, NaiveTime, Timelike, Utc, Weekday, DateTime};
+use rand::Rng;
+use std::{sync::Arc, time::Duration};
+use tokio::time::sleep;
 
 use crate::{
     a_book_bridge_grpc::{ABookBridgeOpenPositionGrpcRequest, ABookBridgePositionSide},
@@ -9,12 +12,12 @@ use crate::{
     position_manager_grpc::PositionManagerOpenPositionGrpcRequest,
     trading_executor_grpc::{
         TradingExecutorActivePositionGrpcModel, TradingExecutorOpenPositionGrpcRequest,
-        TradingExecutorPositionSide,
     },
     AppContext, TradingExecutorError,
 };
 use my_nosql_contracts::{
-    TradingGroupNoSqlEntity, TradingInstrumentNoSqlEntity, TradingProfileNoSqlEntity,
+    TradingGroupNoSqlEntity, TradingInstrumentDayOff, TradingInstrumentNoSqlEntity,
+    TradingProfileNoSqlEntity,
 };
 use service_sdk::my_telemetry;
 
@@ -89,10 +92,17 @@ pub async fn open_position(
         return Err(TradingExecutorError::MultiplierIsNotFound);
     }
 
+    let delay = delay_open(
+        target_trading_profile_instrument.open_position_min_delay_ms,
+        target_trading_profile_instrument.open_position_max_delay_ms,
+    )
+    .await;
+
+    //open delay
+    sleep(Duration::from_micros(delay as u64)).await;
+
     if target_trading_profile.is_a_book {
-        let side: ABookBridgePositionSide = TradingExecutorPositionSide::from_i32(request.side)
-            .unwrap()
-            .into();
+        let side: ABookBridgePositionSide = request.side().into();
         let request = ABookBridgeOpenPositionGrpcRequest {
             instrument_id: request.asset_pair.to_string(),
             position_id: position_id.to_string(),
@@ -134,9 +144,7 @@ pub async fn open_position(
         )
         .await;
 
-    if AccountsManagerOperationResult::Ok
-        != AccountsManagerOperationResult::from_i32(balance_update_result.unwrap().result).unwrap()
-    {
+    if AccountsManagerOperationResult::Ok != balance_update_result.unwrap().result() {
         return Err(TradingExecutorError::NotEnoughBalance);
     }
 
@@ -170,4 +178,153 @@ pub async fn open_position(
     let position = position.position.unwrap().into();
 
     return Ok(position);
+}
+
+pub fn validate_day_off(
+    instrument: &TradingInstrumentDayOff,
+    current_date: DateTime<Utc>
+) -> Result<(), TradingExecutorError> {
+
+    let current_weekday = current_date.weekday();
+    let current_time = current_date.time();
+
+    let from_as_int = as_int(
+        convert_csharp_int_day_to_rust_weekday(instrument.dow_from),
+        instrument.time_from.parse().unwrap(),
+    );
+
+    let to_as_int = as_int(
+        convert_csharp_int_day_to_rust_weekday(instrument.dow_to),
+        instrument.time_to.parse().unwrap(),
+    );
+
+    let current_as_int = as_int(current_weekday, current_time);
+
+    let is_first_case = from_as_int < to_as_int;
+
+    let is_day_off = match is_first_case {
+        true => from_as_int <= current_as_int && current_as_int <= to_as_int,
+        false => {
+            let first_case = current_as_int >= from_as_int;
+            let second_case = current_as_int <= to_as_int;
+            first_case || second_case
+        },
+    };
+
+    if is_day_off {
+        return Err(TradingExecutorError::DayOff);
+    }
+
+    return Ok(());
+}
+
+fn as_int(weekday: Weekday, time: NaiveTime) -> u32 {
+    return weekday as u32 * 86400 + time.hour() * 3600 + time.minute() * 60 + time.second();
+}
+
+fn convert_csharp_int_day_to_rust_weekday(src: i32) -> Weekday {
+    if src == 0 {
+        return Weekday::Sun;
+    }
+    let src = src - 1;
+
+    return Weekday::try_from(src as u8).unwrap();
+}
+
+async fn delay_open(from: i32, to: i32) -> i32 {
+    let mut rng = rand::thread_rng();
+    let delay = rng.gen_range(from..to);
+
+    return delay
+}
+
+
+#[cfg(test)]
+mod test {
+    use chrono::{Utc, TimeZone};
+    use my_nosql_contracts::TradingInstrumentDayOff;
+
+    use crate::validate_day_off;
+
+    #[test]
+    fn check_day_off_f_s_t_day_off() {
+        let day_off = TradingInstrumentDayOff {
+            dow_from: 1,
+            time_from: "21:00:00".to_string(),
+            dow_to: 2,
+            time_to: "14:30:00".to_string(),
+        };
+
+        let date = Utc.ymd(2023, 11, 20).and_hms(22, 0, 0);
+
+        let validate_result = validate_day_off(&day_off, date);
+
+        assert_eq!(true, validate_result.is_err());
+    }
+
+    #[test]
+    fn check_day_off_f_s_t_day_on() {
+        let day_off = TradingInstrumentDayOff {
+            dow_from: 1,
+            time_from: "21:00:00".to_string(),
+            dow_to: 2,
+            time_to: "14:30:00".to_string(),
+        };
+
+        let date = Utc.ymd(2023, 11, 20).and_hms(20, 0, 0);
+
+        let validate_result = validate_day_off(&day_off, date);
+
+        assert_eq!(false, validate_result.is_err());
+    }
+
+    #[test]
+    fn check_day_off_f_b_t_day_off() {
+        let day_off = TradingInstrumentDayOff {
+            dow_from: 5,
+            time_from: "21:00:00".to_string(),
+            dow_to: 2,
+            time_to: "14:30:00".to_string(),
+        };
+
+        let date = Utc.ymd(2023, 11, 20).and_hms(22, 0, 0);
+
+        let validate_result = validate_day_off(&day_off, date);
+
+        assert_eq!(true, validate_result.is_err());
+    }
+
+    #[test]
+    fn check_day_off_f_b_t_day_off_2() {
+        let day_off = TradingInstrumentDayOff {
+            dow_from: 5,
+            time_from: "21:00:00".to_string(),
+            dow_to: 2,
+            time_to: "14:30:00".to_string(),
+        };
+
+        let date = Utc.ymd(2023, 11, 22).and_hms(14, 29, 0);
+
+        let validate_result = validate_day_off(&day_off, date);
+
+        assert_eq!(false, validate_result.is_err());
+    }
+
+    #[test]
+    fn check_day_off_f_b_t_day_on() {
+        let day_off = TradingInstrumentDayOff {
+            dow_from: 5,
+            time_from: "21:00:00".to_string(),
+            dow_to: 2,
+            time_to: "14:30:00".to_string(),
+        };
+
+        let date = Utc.ymd(2023, 11, 22).and_hms(14, 31, 0);
+
+        let validate_result = validate_day_off(&day_off, date);
+
+        assert_eq!(false, validate_result.is_err());
+    }
+
+    
 }

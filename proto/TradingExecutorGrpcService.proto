@@ -2,6 +2,11 @@ syntax = "proto3";
 package trading_executor;
 import "google/protobuf/empty.proto";
 
+message TradingExecutorSwapGrpcModel{
+    double Amount = 1;
+    uint32 SwapChargeDate = 2;
+}
+
 enum TradingExecutorOperationsCodes{
     Ok = 0;
     DayOff = 1;
@@ -88,6 +93,7 @@ message TradingExecutorActivePositionGrpcModel{
     string Quote = 23;
     string Collateral = 24;
     double BaseCollateralOpenPrice = 25;
+    repeated TradingExecutorSwapGrpcModel Swaps = 26;
 }
 
 message TradingExecutorPendingPositionGrpcModel{
@@ -146,6 +152,7 @@ message TradingExecutorClosedPositionGrpcModel{
     TradingExecutorBidAsk CloseBidAsk = 22;
     string CloseProcessId = 23;
     TradingExecutorClosePositionReason CloseReason = 24;
+    repeated TradingExecutorSwapGrpcModel Swaps = 25;
 }
 
 message TradingExecutorClosePositionGrpcResponse{
