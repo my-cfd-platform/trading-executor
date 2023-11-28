@@ -1,4 +1,4 @@
-use chrono::{Datelike, NaiveTime, Timelike, Utc, Weekday, DateTime};
+use chrono::{DateTime, Datelike, NaiveTime, Timelike, Utc, Weekday};
 use rand::Rng;
 use std::{sync::Arc, time::Duration};
 use tokio::time::sleep;
@@ -39,6 +39,9 @@ pub async fn open_position(
     let Some(target_instrument) = target_instrument else {
         return Err(TradingExecutorError::InstrumentNotFound);
     };
+
+    validate_instrument_day_off(&target_instrument)?;
+
     let Some(target_account) = app
         .accounts_manager_grpc_client
         .get_client_account(
@@ -181,11 +184,20 @@ pub async fn open_position(
     return Ok(position);
 }
 
+pub fn validate_instrument_day_off(
+    instrument: &TradingInstrumentNoSqlEntity,
+) -> Result<(), TradingExecutorError> {
+    for day_off in &instrument.days_off {
+        validate_day_off(&day_off, Utc::now())?;
+    }
+
+    return Ok(());
+}
+
 pub fn validate_day_off(
     instrument: &TradingInstrumentDayOff,
-    current_date: DateTime<Utc>
+    current_date: DateTime<Utc>,
 ) -> Result<(), TradingExecutorError> {
-
     let current_weekday = current_date.weekday();
     let current_time = current_date.time();
 
@@ -209,7 +221,7 @@ pub fn validate_day_off(
             let first_case = current_as_int >= from_as_int;
             let second_case = current_as_int <= to_as_int;
             first_case || second_case
-        },
+        }
     };
 
     if is_day_off {
@@ -236,13 +248,12 @@ async fn delay_open(from: i32, to: i32) -> i32 {
     let mut rng = rand::thread_rng();
     let delay = rng.gen_range(from..to);
 
-    return delay
+    return delay;
 }
-
 
 #[cfg(test)]
 mod test {
-    use chrono::{Utc, TimeZone};
+    use chrono::{TimeZone, Utc};
     use my_nosql_contracts::TradingInstrumentDayOff;
 
     use crate::validate_day_off;
@@ -326,6 +337,4 @@ mod test {
 
         assert_eq!(false, validate_result.is_err());
     }
-
-    
 }
