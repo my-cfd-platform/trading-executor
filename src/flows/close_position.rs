@@ -9,7 +9,7 @@ use crate::{
     trading_executor_grpc::{
         TradingExecutorClosePositionGrpcRequest, TradingExecutorClosedPositionGrpcModel,
     },
-    AppContext, TradingExecutorError,
+    validate_instrument_day_off, validate_timeout, AppContext, TradingExecutorError,
 };
 use service_sdk::my_telemetry;
 
@@ -59,9 +59,29 @@ pub async fn close_position(
         )
         .await;
 
-    let Some(_) = target_instrument else {
+    let Some(target_instrument) = target_instrument else {
         return Err(TradingExecutorError::InstrumentNotFound);
     };
+
+    let position_to_close = app
+        .position_manager_grpc_client
+        .get_active_position(
+            PositionManagerGetActivePositionGrpcRequest {
+                trader_id: request.trader_id.clone(),
+                account_id: request.account_id.clone(),
+                position_id: request.position_id.clone(),
+            },
+            telemetry_context,
+        )
+        .await
+        .unwrap();
+
+    let Some(position_to_close) = position_to_close.position else {
+        return Err(TradingExecutorError::PositionNotFound);
+    };
+
+    validate_instrument_day_off(&target_instrument)?;
+    validate_timeout(app, &position_to_close.asset_pair, &target_instrument).await?;
 
     let close_result = app
         .position_manager_grpc_client

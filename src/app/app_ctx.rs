@@ -9,7 +9,7 @@ use crate::{
     ABookBridgeGrpcClient, AccountsManagerGrpcClient, PositionManagerGrpcClient, SettingsReader,
 };
 use my_nosql_contracts::{
-    TradingGroupNoSqlEntity, TradingInstrumentNoSqlEntity, TradingProfileNoSqlEntity,
+    TradingGroupNoSqlEntity, TradingInstrumentNoSqlEntity, TradingProfileNoSqlEntity, BidAskSnapshotNoSqlEntity,
 };
 
 pub const APP_VERSION: &'static str = env!("CARGO_PKG_VERSION");
@@ -25,6 +25,8 @@ pub struct AppContext {
         Arc<dyn MyNoSqlDataReader<TradingGroupNoSqlEntity> + Send + Sync + 'static>,
     pub trading_profiles_reader:
         Arc<dyn MyNoSqlDataReader<TradingProfileNoSqlEntity> + Send + Sync + 'static>,
+    pub bid_ask_snapshot_ns_reader:
+        Arc<dyn MyNoSqlDataReader<BidAskSnapshotNoSqlEntity> + Send + Sync>,
 }
 
 impl AppContext {
@@ -48,6 +50,7 @@ impl AppContext {
         let trading_instruments_reader = service_context.get_ns_reader().await;
         let trading_groups_reader = service_context.get_ns_reader().await;
         let trading_profiles_reader = service_context.get_ns_reader().await;
+        let bid_ask_snapshot_ns_reader = service_context.get_ns_reader().await;
 
         AppContext {
             position_manager_grpc_client,
@@ -56,6 +59,7 @@ impl AppContext {
             trading_groups_reader,
             trading_profiles_reader,
             a_book_bridge_grpc_client,
+            bid_ask_snapshot_ns_reader
         }
     }
 }
