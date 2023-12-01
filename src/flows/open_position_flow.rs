@@ -1,7 +1,6 @@
-use chrono::{DateTime, Datelike, NaiveTime, Timelike, Utc, Weekday};
-use rand::Rng;
-use rust_extensions::date_time::DateTimeAsMicroseconds;
 use std::{sync::Arc, time::Duration};
+
+use rand::Rng;
 use tokio::time::sleep;
 
 use crate::{
@@ -14,7 +13,7 @@ use crate::{
     trading_executor_grpc::{
         TradingExecutorActivePositionGrpcModel, TradingExecutorOpenPositionGrpcRequest,
     },
-    validate_timeout, AppContext, TradingExecutorError, validate_instrument_day_off,
+    validate_instrument_day_off, validate_timeout, AppContext, TradingExecutorError,
 };
 use my_nosql_contracts::{
     BidAskSnapshotNoSqlEntity, TradingGroupNoSqlEntity, TradingInstrumentDayOff,
@@ -42,8 +41,7 @@ pub async fn open_position(
     };
 
     validate_instrument_day_off(&target_instrument)?;
-    validate_timeout(app, &request.asset_pair, &target_instrument).await?;
-    
+
     let Some(target_account) = app
         .accounts_manager_grpc_client
         .get_client_account(
@@ -59,6 +57,15 @@ pub async fn open_position(
     else {
         return Err(TradingExecutorError::AccountNotFound);
     };
+
+    validate_timeout(
+        app,
+        &target_instrument,
+        &target_instrument.base,
+        &target_instrument.quote,
+        &target_account.currency,
+    )
+    .await?;
 
     let Some(target_trading_group) = app
         .trading_groups_reader

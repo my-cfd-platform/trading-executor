@@ -18,7 +18,7 @@ pub async fn close_position(
     request: TradingExecutorClosePositionGrpcRequest,
     telemetry_context: &my_telemetry::MyTelemetryContext,
 ) -> Result<TradingExecutorClosedPositionGrpcModel, TradingExecutorError> {
-    let Some(_) = app
+    let Some(account) = app
         .accounts_manager_grpc_client
         .get_client_account(
             crate::accounts_manager_grpc::AccountManagerGetClientAccountGrpcRequest {
@@ -81,7 +81,14 @@ pub async fn close_position(
     };
 
     validate_instrument_day_off(&target_instrument)?;
-    validate_timeout(app, &position_to_close.asset_pair, &target_instrument).await?;
+    validate_timeout(
+        app,
+        &target_instrument,
+        &target_instrument.base,
+        &target_instrument.quote,
+        &account.currency,
+    )
+    .await?;
 
     let close_result = app
         .position_manager_grpc_client
