@@ -5,9 +5,7 @@ use service_sdk::{
     ServiceContext,
 };
 
-use crate::{
-    ABookBridgeGrpcClient, AccountsManagerGrpcClient, PositionManagerGrpcClient, SettingsReader,
-};
+use crate::{ABookBridgeGrpcClient, AccountsManagerGrpcClient, PositionManagerGrpcClient};
 use my_nosql_contracts::{
     BidAskSnapshotNoSqlEntity, TradingGroupNoSqlEntity, TradingInstrumentNoSqlEntity,
     TradingProfileNoSqlEntity,
@@ -28,7 +26,7 @@ pub struct AppContext {
 
 impl AppContext {
     pub async fn new(
-        settings: Arc<SettingsReader>,
+        settings: Arc<crate::settings::SettingsReader>,
         service_context: &ServiceContext,
     ) -> AppContext {
         let settings = settings.get_settings().await;
