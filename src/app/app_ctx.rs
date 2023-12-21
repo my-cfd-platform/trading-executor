@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use service_sdk::{
-    my_grpc_extensions::GrpcClientSettings, my_no_sql_sdk::reader::MyNoSqlDataReader,
+    my_grpc_extensions::GrpcClientSettings, my_no_sql_sdk::reader::MyNoSqlDataReaderTcp,
     ServiceContext,
 };
 
@@ -9,7 +9,8 @@ use crate::{
     ABookBridgeGrpcClient, AccountsManagerGrpcClient, PositionManagerGrpcClient, SettingsReader,
 };
 use my_nosql_contracts::{
-    TradingGroupNoSqlEntity, TradingInstrumentNoSqlEntity, TradingProfileNoSqlEntity, BidAskSnapshotNoSqlEntity,
+    BidAskSnapshotNoSqlEntity, TradingGroupNoSqlEntity, TradingInstrumentNoSqlEntity,
+    TradingProfileNoSqlEntity,
 };
 
 pub const APP_VERSION: &'static str = env!("CARGO_PKG_VERSION");
@@ -19,14 +20,10 @@ pub struct AppContext {
     pub position_manager_grpc_client: Arc<PositionManagerGrpcClient>,
     pub accounts_manager_grpc_client: Arc<AccountsManagerGrpcClient>,
     pub a_book_bridge_grpc_client: Arc<ABookBridgeGrpcClient>,
-    pub trading_instruments_reader:
-        Arc<dyn MyNoSqlDataReader<TradingInstrumentNoSqlEntity> + Send + Sync + 'static>,
-    pub trading_groups_reader:
-        Arc<dyn MyNoSqlDataReader<TradingGroupNoSqlEntity> + Send + Sync + 'static>,
-    pub trading_profiles_reader:
-        Arc<dyn MyNoSqlDataReader<TradingProfileNoSqlEntity> + Send + Sync + 'static>,
-    pub bid_ask_snapshot_ns_reader:
-        Arc<dyn MyNoSqlDataReader<BidAskSnapshotNoSqlEntity> + Send + Sync>,
+    pub trading_instruments_reader: Arc<MyNoSqlDataReaderTcp<TradingInstrumentNoSqlEntity>>,
+    pub trading_groups_reader: Arc<MyNoSqlDataReaderTcp<TradingGroupNoSqlEntity>>,
+    pub trading_profiles_reader: Arc<MyNoSqlDataReaderTcp<TradingProfileNoSqlEntity>>,
+    pub bid_ask_snapshot_ns_reader: Arc<MyNoSqlDataReaderTcp<BidAskSnapshotNoSqlEntity>>,
 }
 
 impl AppContext {
@@ -59,7 +56,7 @@ impl AppContext {
             trading_groups_reader,
             trading_profiles_reader,
             a_book_bridge_grpc_client,
-            bid_ask_snapshot_ns_reader
+            bid_ask_snapshot_ns_reader,
         }
     }
 }

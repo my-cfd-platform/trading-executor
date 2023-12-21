@@ -16,8 +16,7 @@ use crate::{
     validate_instrument_day_off, validate_timeout, AppContext, TradingExecutorError,
 };
 use my_nosql_contracts::{
-    BidAskSnapshotNoSqlEntity, TradingGroupNoSqlEntity, TradingInstrumentDayOff,
-    TradingInstrumentNoSqlEntity, TradingProfileNoSqlEntity,
+    TradingGroupNoSqlEntity, TradingInstrumentNoSqlEntity, TradingProfileNoSqlEntity,
 };
 use service_sdk::my_telemetry;
 

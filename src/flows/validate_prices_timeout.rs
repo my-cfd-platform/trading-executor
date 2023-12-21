@@ -1,6 +1,6 @@
 use chrono::Utc;
-use my_nosql_contracts::{BidAskSnapshotNoSqlEntity, TradingInstrumentNoSqlEntity};
-use rust_extensions::date_time::DateTimeAsMicroseconds;
+use my_nosql_contracts::TradingInstrumentNoSqlEntity;
+use service_sdk::rust_extensions::date_time::DateTimeAsMicroseconds;
 
 use crate::{AppContext, TradingExecutorError};
 
@@ -62,11 +62,12 @@ pub async fn validate_timeout(
         validate_instrument_timeout(&instrument, quote_collateral.unix_timestamp_with_milis)?;
     }
 
-    let Some(asset_bidask) = bid_asks.iter().find(|x| x.row_key == asset_instrument.get_id()) else {
+    let Some(asset_bidask) = bid_asks
+        .iter()
+        .find(|x| x.row_key == asset_instrument.get_id())
+    else {
         return Err(TradingExecutorError::NoLiquidity);
     };
-
-
 
     let Some(instrument) = app
         .trading_instruments_reader
@@ -83,10 +84,9 @@ pub async fn validate_timeout(
     return Ok(());
 }
 
-
 pub fn validate_instrument_timeout(
     instrument: &TradingInstrumentNoSqlEntity,
-    last_bidask_date: u64
+    last_bidask_date: u64,
 ) -> Result<(), TradingExecutorError> {
     let current_date = Utc::now();
     let ns_date: DateTimeAsMicroseconds = last_bidask_date.into();

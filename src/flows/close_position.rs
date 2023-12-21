@@ -76,7 +76,7 @@ pub async fn close_position(
         .await
         .unwrap();
 
-    let Some(position_to_close) = position_to_close.position else {
+    let Some(_position_to_close) = position_to_close.position else {
         return Err(TradingExecutorError::PositionNotFound);
     };
 

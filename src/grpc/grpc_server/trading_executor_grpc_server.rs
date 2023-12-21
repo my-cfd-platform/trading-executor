@@ -19,7 +19,7 @@ use crate::{
 };
 use my_grpc_extensions::prelude::Stream;
 use my_grpc_extensions::server::with_telemetry;
-use service_sdk::{my_grpc_extensions, my_telemetry::MyTelemetryContext};
+use service_sdk::my_grpc_extensions;
 use std::pin::Pin;
 
 #[tonic::async_trait]
@@ -48,7 +48,7 @@ impl TradingExecutorGrpcService for GrpcService {
         request: tonic::Request<TradingExecutorOpenPositionGrpcRequest>,
     ) -> Result<tonic::Response<TradingExecutorOpenPositionGrpcResponse>, tonic::Status> {
         let request = request.into_inner();
-        
+
         let my_telemetry = &service_sdk::my_telemetry::MyTelemetryContext::new();
         let open_position_result = open_position(&self.app, request, my_telemetry).await;
 
@@ -171,7 +171,8 @@ impl TradingExecutorGrpcService for GrpcService {
             None => vec![],
         };
 
-        my_grpc_extensions::grpc_server::send_vec_to_stream(positions.into_iter(), |x| x.into()).await
+        my_grpc_extensions::grpc_server::send_vec_to_stream(positions.into_iter(), |x| x.into())
+            .await
     }
 
     #[with_telemetry]
@@ -198,7 +199,8 @@ impl TradingExecutorGrpcService for GrpcService {
             None => vec![],
         };
 
-        my_grpc_extensions::grpc_server::send_vec_to_stream(positions.into_iter(), |x| x.into()).await
+        my_grpc_extensions::grpc_server::send_vec_to_stream(positions.into_iter(), |x| x.into())
+            .await
     }
 
     #[with_telemetry]
@@ -226,10 +228,7 @@ impl TradingExecutorGrpcService for GrpcService {
         Ok(tonic::Response::new(response))
     }
 
-    async fn ping(
-        &self,
-        _: tonic::Request<()>,
-    ) -> Result<tonic::Response<()>, tonic::Status> {
+    async fn ping(&self, _: tonic::Request<()>) -> Result<tonic::Response<()>, tonic::Status> {
         return Ok(tonic::Response::new(()));
     }
 }
