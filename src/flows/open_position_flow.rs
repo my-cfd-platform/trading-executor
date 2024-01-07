@@ -1,3 +1,4 @@
+use core::panic;
 use std::{sync::Arc, time::Duration};
 
 use rand::Rng;
@@ -181,15 +182,40 @@ pub async fn open_position(
         id: Some(position_id),
     };
 
-    let position = app
+    let response = match app
         .position_manager_grpc_client
         .open_position(open_position_request, telemetry_context)
         .await
-        .unwrap();
+    {
+        Ok(response) => {
+            let position: TradingExecutorActivePositionGrpcModel =
+                position.position.unwrap().into();
 
-    let position = position.position.unwrap().into();
+            Ok(position)
+        }
+        Err(err) => {
+            app.accounts_manager_grpc_client
+                .update_client_account_balance(
+                    AccountManagerUpdateAccountBalanceGrpcRequest {
+                        trader_id: request.trader_id.clone(),
+                        account_id: request.account_id.clone(),
+                        delta: request.invest_amount,
+                        comment: "Cancel open position balance charge".to_string(),
+                        process_id: request.process_id.clone(),
+                        allow_negative_balance: false,
+                        reason: UpdateBalanceReason::TradingResult as i32,
+                        reference_transaction_id: None,
+                    },
+                    &my_telemetry::MyTelemetryContext::new(),
+                )
+                .await
+                .unwrap();
 
-    return Ok(position);
+            panic!("Open position error. {:?}", err);
+        }
+    };
+
+    return response;
 }
 
 async fn delay_open(from: i32, to: i32) -> i32 {

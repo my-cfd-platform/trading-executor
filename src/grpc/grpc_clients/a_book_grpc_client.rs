@@ -4,7 +4,7 @@ use service_sdk::{async_trait, my_grpc_extensions, my_telemetry};
     proto_file: "./proto/ABookBridge.proto",
     crate_ns: "crate::a_book_bridge_grpc",
     retries: 3,
-    request_timeout_sec: 1,
+    request_timeout_sec: 10,
     ping_timeout_sec: 1,
     ping_interval_sec: 3,
 )]
