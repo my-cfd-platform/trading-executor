@@ -5,7 +5,7 @@ use rand::Rng;
 use tokio::time::sleep;
 
 use crate::{
-    a_book_bridge_grpc::{ABookBridgeOpenPositionGrpcRequest, ABookBridgePositionSide},
+    a_book_bridge_grpc::{self, ABookBridgeOpenPositionGrpcRequest, ABookBridgePositionSide},
     accounts_manager_grpc::{
         AccountManagerGetClientAccountGrpcRequest, AccountManagerUpdateAccountBalanceGrpcRequest,
         AccountsManagerOperationResult, UpdateBalanceReason,
@@ -115,6 +115,10 @@ pub async fn open_position(
     sleep(Duration::from_millis(delay as u64)).await;
 
     if target_trading_profile.is_a_book {
+        let Some(a_book_bridge_grpc_client) = &app.a_book_bridge_grpc_client else {
+            return Err(TradingExecutorError::ABookReject);
+        };
+
         let side: ABookBridgePositionSide = request.side().into();
         let request = ABookBridgeOpenPositionGrpcRequest {
             instrument_id: request.asset_pair.to_string(),
@@ -125,8 +129,7 @@ pub async fn open_position(
             side: side as i32,
         };
 
-        let response = app
-            .a_book_bridge_grpc_client
+        let response = a_book_bridge_grpc_client
             .open_position(request, telemetry_context)
             .await
             .unwrap();
@@ -189,7 +192,7 @@ pub async fn open_position(
     {
         Ok(response) => {
             let position: TradingExecutorActivePositionGrpcModel =
-                position.position.unwrap().into();
+                response.position.unwrap().into();
 
             Ok(position)
         }

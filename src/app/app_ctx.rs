@@ -17,7 +17,7 @@ pub const APP_NAME: &'static str = env!("CARGO_PKG_NAME");
 pub struct AppContext {
     pub position_manager_grpc_client: Arc<PositionManagerGrpcClient>,
     pub accounts_manager_grpc_client: Arc<AccountsManagerGrpcClient>,
-    pub a_book_bridge_grpc_client: Arc<ABookBridgeGrpcClient>,
+    pub a_book_bridge_grpc_client: Option<Arc<ABookBridgeGrpcClient>>,
     pub trading_instruments_reader: Arc<MyNoSqlDataReaderTcp<TradingInstrumentNoSqlEntity>>,
     pub trading_groups_reader: Arc<MyNoSqlDataReaderTcp<TradingGroupNoSqlEntity>>,
     pub trading_profiles_reader: Arc<MyNoSqlDataReaderTcp<TradingProfileNoSqlEntity>>,
@@ -38,9 +38,11 @@ impl AppContext {
             GrpcSettings::new_arc(settings.accounts_manager_grpc.to_string()),
         ));
 
-        let a_book_bridge_grpc_client = Arc::new(ABookBridgeGrpcClient::new(
-            GrpcSettings::new_arc(settings.a_book_bridge_grpc.to_string()),
-        ));
+        let a_book_bridge_grpc_client = settings.a_book_bridge_grpc.map(|x| {
+            Arc::new(ABookBridgeGrpcClient::new(GrpcSettings::new_arc(
+                x.to_string(),
+            )))
+        });
 
         let trading_instruments_reader = service_context.get_ns_reader().await;
         let trading_groups_reader = service_context.get_ns_reader().await;
