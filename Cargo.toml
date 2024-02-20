@@ -14,7 +14,7 @@ service-sdk = { git = "https://github.com/MyJetTools/service-sdk.git", tag = "0.
 
 my-nosql-contracts = { tag = "0.1.24", git = "https://github.com/my-cfd-platform/my-nosql-contracts.git" }
 
-
+trade-log = { git = "https://github.com/MyJetTools/trade-log.git", tag = "0.1.7" }
 rand = "*"
 uuid = { version = "*", features = ["v4"] }
 tonic = { version = "*", features = ["tls", "tls-roots", "prost"] }

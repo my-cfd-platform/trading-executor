@@ -110,7 +110,7 @@ pub async fn open_position(
     )
     .await;
 
-    //open delay
+    
     println!("Open delay: {} ms", delay);
     sleep(Duration::from_millis(delay as u64)).await;
 
@@ -120,7 +120,7 @@ pub async fn open_position(
         };
 
         let side: ABookBridgePositionSide = request.side().into();
-        let request = ABookBridgeOpenPositionGrpcRequest {
+        let a_book_request = ABookBridgeOpenPositionGrpcRequest {
             instrument_id: request.asset_pair.to_string(),
             position_id: position_id.to_string(),
             account_id: request.account_id.to_string(),
@@ -130,9 +130,20 @@ pub async fn open_position(
         };
 
         let response = a_book_bridge_grpc_client
-            .open_position(request, telemetry_context)
+            .open_position(a_book_request.clone(), telemetry_context)
             .await
             .unwrap();
+
+        trade_log::trade_log!(
+            &request.trader_id,
+            &request.account_id,
+            &request.process_id,
+            "n/a",
+            "Calling ABookBridge open position",
+            telemetry_context.clone(),
+            "request" = &a_book_request,
+            "response" = &response
+        );
 
         let result = {
             if response.status_code == 0 {
@@ -143,24 +154,38 @@ pub async fn open_position(
         };
     }
 
+    let balance_update_request = AccountManagerUpdateAccountBalanceGrpcRequest {
+        trader_id: request.trader_id.clone(),
+        account_id: request.account_id.clone(),
+        delta: -request.invest_amount,
+        comment: "Open position balance charge".to_string(),
+        process_id: request.process_id.clone(),
+        allow_negative_balance: false,
+        reason: UpdateBalanceReason::TradingResult as i32,
+        reference_transaction_id: None,
+    };
+
     let balance_update_result = app
         .accounts_manager_grpc_client
         .update_client_account_balance(
-            AccountManagerUpdateAccountBalanceGrpcRequest {
-                trader_id: request.trader_id.clone(),
-                account_id: request.account_id.clone(),
-                delta: -request.invest_amount,
-                comment: "Open position balance charge".to_string(),
-                process_id: request.process_id.clone(),
-                allow_negative_balance: false,
-                reason: UpdateBalanceReason::TradingResult as i32,
-                reference_transaction_id: None,
-            },
+            balance_update_request.clone(),
             &my_telemetry::MyTelemetryContext::new(),
         )
-        .await;
+        .await
+        .unwrap();
 
-    if AccountsManagerOperationResult::Ok != balance_update_result.unwrap().result() {
+        trade_log::trade_log!(
+            &request.trader_id,
+            &request.account_id,
+            &request.process_id,
+            "n/a",
+            "Called account manager for updating balance",
+            telemetry_context.clone(),
+            "request" = &balance_update_request,
+            "response" = &balance_update_result
+        );
+
+    if AccountsManagerOperationResult::Ok != balance_update_result.result() {
         return Err(TradingExecutorError::NotEnoughBalance);
     }
 
@@ -187,34 +212,60 @@ pub async fn open_position(
 
     let response = match app
         .position_manager_grpc_client
-        .open_position(open_position_request, telemetry_context)
+        .open_position(open_position_request.clone(), telemetry_context)
         .await
     {
         Ok(response) => {
+
+            trade_log::trade_log!(
+                &request.trader_id,
+                &request.account_id,
+                &request.process_id,
+                "n/a",
+                "Success open position request.",
+                telemetry_context.clone(),
+                "request" = &open_position_request,
+                "response" = &response
+            );
+
             let position: TradingExecutorActivePositionGrpcModel =
                 response.position.unwrap().into();
 
             Ok(position)
         }
         Err(err) => {
+            let return_request = AccountManagerUpdateAccountBalanceGrpcRequest {
+                trader_id: request.trader_id.clone(),
+                account_id: request.account_id.clone(),
+                delta: request.invest_amount,
+                comment: "Cancel open position balance charge".to_string(),
+                process_id: request.process_id.clone(),
+                allow_negative_balance: false,
+                reason: UpdateBalanceReason::TradingResult as i32,
+                reference_transaction_id: None,
+            };
+
             app.accounts_manager_grpc_client
                 .update_client_account_balance(
-                    AccountManagerUpdateAccountBalanceGrpcRequest {
-                        trader_id: request.trader_id.clone(),
-                        account_id: request.account_id.clone(),
-                        delta: request.invest_amount,
-                        comment: "Cancel open position balance charge".to_string(),
-                        process_id: request.process_id.clone(),
-                        allow_negative_balance: false,
-                        reason: UpdateBalanceReason::TradingResult as i32,
-                        reference_transaction_id: None,
-                    },
+                    return_request.clone(),
                     &my_telemetry::MyTelemetryContext::new(),
                 )
                 .await
                 .unwrap();
 
-            panic!("Open position error. {:?}", err);
+                trade_log::trade_log!(
+                    &request.trader_id,
+                    &request.account_id,
+                    &request.process_id,
+                    "n/a",
+                    "Failed to open position. Returning charged funds.",
+                    telemetry_context.clone(),
+                    "request" = &open_position_request,
+                    "err" = &format!("{:?}", err),
+                    "balance_return_request" = &return_request
+                );
+
+            return Err(TradingExecutorError::TechError);
         }
     };
 

@@ -25,7 +25,7 @@ impl Into<TradingExecutorPendingPositionGrpcModel> for PositionManagerPendingPos
             leverage: self.leverage,
             stop_out_percent: self.stop_out_percent,
             create_process_id: self.create_process_id,
-            create_date_unix_timestamp_milis: self.create_date_unix_timestamp_milis,
+            create_date_unix_timestamp_milliseconds: self.create_date_unix_timestamp_milis,
             last_update_process_id: self.last_update_process_id,
             last_update_date: self.last_update_date,
             tp_in_profit: self.tp_in_profit,
@@ -49,7 +49,7 @@ impl Into<TradingExecutorActivePositionGrpcModel> for PositionManagerActivePosit
             leverage: self.leverage,
             stop_out_percent: self.stop_out_percent,
             create_process_id: self.create_process_id,
-            create_date_unix_timestamp_milis: self.create_date_unix_timestamp_milis,
+            create_date_unix_timestamp_milliseconds: self.create_date_unix_timestamp_milis,
             last_update_process_id: self.last_update_process_id,
             last_update_date: self.last_update_date,
             tp_in_profit: self.tp_in_profit,
@@ -80,7 +80,7 @@ impl Into<TradingExecutorClosedPositionGrpcModel> for PositionManagerClosedPosit
             leverage: self.leverage,
             stop_out_percent: self.stop_out_percent,
             create_process_id: self.create_process_id,
-            create_date_unix_timestamp_milis: self.create_date_unix_timestamp_milis,
+            create_date_unix_timestamp_milliseconds: self.create_date_unix_timestamp_milis,
             last_update_process_id: self.last_update_process_id,
             last_update_date: self.last_update_date,
             tp_in_profit: self.tp_in_profit,
@@ -116,7 +116,7 @@ impl Into<TradingExecutorBidAsk> for PositionManagerBidAsk {
             asset_pair: self.asset_pair,
             bid: self.bid,
             ask: self.ask,
-            date_time_unix_timestamp_milis: self.date_time_unix_timestamp_milis,
+            date_time_unix_timestamp_milliseconds: self.date_time_unix_timestamp_milis,
         }
     }
 }

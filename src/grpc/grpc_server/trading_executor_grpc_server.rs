@@ -54,14 +54,14 @@ impl TradingExecutorGrpcService for GrpcService {
 
         let response = match open_position_result {
             Ok(position) => TradingExecutorOpenPositionGrpcResponse {
-                status: 0,
-                positon: Some(position),
+                status: TradingExecutorOperationsCodes::Ok as i32,
+                position: Some(position),
             },
             Err(error) => {
                 let error: TradingExecutorOperationsCodes = error.into();
                 TradingExecutorOpenPositionGrpcResponse {
                     status: error.into(),
-                    positon: None,
+                    position: None,
                 }
             }
         };
