@@ -3,6 +3,7 @@ use std::{sync::Arc, time::Duration};
 
 use rand::Rng;
 use tokio::time::sleep;
+use uuid::Uuid;
 
 use crate::{
     a_book_bridge_grpc::{self, ABookBridgeOpenPositionGrpcRequest, ABookBridgePositionSide},
@@ -19,7 +20,7 @@ use crate::{
 use my_nosql_contracts::{
     TradingGroupNoSqlEntity, TradingInstrumentNoSqlEntity, TradingProfileNoSqlEntity,
 };
-use service_sdk::my_telemetry;
+use service_sdk::my_telemetry::{self, MyTelemetryContext};
 
 pub async fn open_position(
     app: &Arc<AppContext>,
@@ -110,7 +111,6 @@ pub async fn open_position(
     )
     .await;
 
-    
     println!("Open delay: {} ms", delay);
     sleep(Duration::from_millis(delay as u64)).await;
 
@@ -129,11 +129,13 @@ pub async fn open_position(
             side: side as i32,
         };
 
+        let start_date = chrono::Utc::now().to_string();
         let response = a_book_bridge_grpc_client
             .open_position(a_book_request.clone(), telemetry_context)
             .await
             .unwrap();
 
+        let end_date = chrono::Utc::now().to_string();
         trade_log::trade_log!(
             &request.trader_id,
             &request.account_id,
@@ -142,7 +144,10 @@ pub async fn open_position(
             "Calling ABookBridge open position",
             telemetry_context.clone(),
             "request" = &a_book_request,
-            "response" = &response
+            "response" = &response,
+            "trace_id" = &telemetry_context.as_string(),
+            "start_date" = &start_date,
+            "end_date" = &end_date
         );
 
         let result = {
@@ -174,16 +179,17 @@ pub async fn open_position(
         .await
         .unwrap();
 
-        trade_log::trade_log!(
-            &request.trader_id,
-            &request.account_id,
-            &request.process_id,
-            "n/a",
-            "Called account manager for updating balance",
-            telemetry_context.clone(),
-            "request" = &balance_update_request,
-            "response" = &balance_update_result
-        );
+    trade_log::trade_log!(
+        &request.trader_id,
+        &request.account_id,
+        &request.process_id,
+        "n/a",
+        "Called account manager for updating balance",
+        telemetry_context.clone(),
+        "request" = &balance_update_request,
+        "response" = &balance_update_result,
+        "trace_id" = &telemetry_context.as_string()
+    );
 
     if AccountsManagerOperationResult::Ok != balance_update_result.result() {
         return Err(TradingExecutorError::NotEnoughBalance);
@@ -216,7 +222,6 @@ pub async fn open_position(
         .await
     {
         Ok(response) => {
-
             trade_log::trade_log!(
                 &request.trader_id,
                 &request.account_id,
@@ -225,9 +230,10 @@ pub async fn open_position(
                 "Success open position request.",
                 telemetry_context.clone(),
                 "request" = &open_position_request,
-                "response" = &response
+                "response" = &response,
+                "trace_id" = &telemetry_context.as_string()
             );
-
+            
             let position: TradingExecutorActivePositionGrpcModel =
                 response.position.unwrap().into();
 
@@ -239,7 +245,7 @@ pub async fn open_position(
                 account_id: request.account_id.clone(),
                 delta: request.invest_amount,
                 comment: "Cancel open position balance charge".to_string(),
-                process_id: request.process_id.clone(),
+                process_id: Uuid::new_v4().to_string(),
                 allow_negative_balance: false,
                 reason: UpdateBalanceReason::TradingResult as i32,
                 reference_transaction_id: None,
@@ -253,17 +259,18 @@ pub async fn open_position(
                 .await
                 .unwrap();
 
-                trade_log::trade_log!(
-                    &request.trader_id,
-                    &request.account_id,
-                    &request.process_id,
-                    "n/a",
-                    "Failed to open position. Returning charged funds.",
-                    telemetry_context.clone(),
-                    "request" = &open_position_request,
-                    "err" = &format!("{:?}", err),
-                    "balance_return_request" = &return_request
-                );
+            trade_log::trade_log!(
+                &request.trader_id,
+                &request.account_id,
+                &request.process_id,
+                "n/a",
+                "Failed to open position. Returning charged funds.",
+                telemetry_context.clone(),
+                "request" = &open_position_request,
+                "err" = &format!("{:?}", err),
+                "balance_return_request" = &return_request,
+                "trace_id" = &telemetry_context.as_string()
+            );
 
             return Err(TradingExecutorError::TechError);
         }
