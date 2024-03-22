@@ -1,5 +1,5 @@
 use core::panic;
-use std::{sync::Arc, time::Duration};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use rand::Rng;
 use tokio::time::sleep;
@@ -214,6 +214,10 @@ pub async fn open_position(
         quote: target_instrument.quote.clone(),
         collateral_currency: "USD".to_string(),
         id: Some(position_id),
+        open_process_id: None,
+        metadata: HashMap::new(),
+        topping_up_percent: target_trading_profile.topping_up_percent,
+        margin_call_percent: target_trading_profile.margin_call_percent,
     };
 
     let response = match app

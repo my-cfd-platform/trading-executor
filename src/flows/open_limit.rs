@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use my_nosql_contracts::{
     TradingGroupNoSqlEntity, TradingInstrumentNoSqlEntity, TradingProfileNoSqlEntity,
@@ -108,6 +108,10 @@ pub async fn open_limit(
         collateral_currency: "USD".to_string(),
         id: Some(position_id),
         desire_price: request.desire_price,
+        open_process_id: None,
+        metadata: HashMap::new(),
+        topping_up_percent: target_trading_profile.topping_up_percent,
+        margin_call_percent: target_trading_profile.margin_call_percent,
     };
 
     let position = app

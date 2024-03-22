@@ -12,7 +12,7 @@ service-sdk = { git = "https://github.com/MyJetTools/service-sdk.git", tag = "0.
     "macros",
 ] }
 
-my-nosql-contracts = { tag = "0.1.24", git = "https://github.com/my-cfd-platform/my-nosql-contracts.git" }
+my-nosql-contracts = { tag = "0.1.27", git = "https://github.com/my-cfd-platform/my-nosql-contracts.git" }
 
 trade-log = { git = "https://github.com/MyJetTools/trade-log.git", tag = "0.1.7" }
 rand = "*"
