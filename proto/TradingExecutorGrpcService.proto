@@ -95,6 +95,8 @@ message TradingExecutorActivePositionGrpcModel{
     string Collateral = 24;
     double BaseCollateralOpenPrice = 25;
     repeated TradingExecutorSwapGrpcModel Swaps = 26;
+    optional double ReservedFundsForToppingUp = 27;
+    optional double ToppingUpPercent = 28;
 }
 
 message TradingExecutorPendingPositionGrpcModel{
@@ -115,6 +117,7 @@ message TradingExecutorPendingPositionGrpcModel{
     optional double TpInAssetPrice = 15;
     optional double SlInAssetPrice = 16;
     double DesirePrice = 17;
+    optional double ToppingUpPercent = 18;
 }
 
 message TradingExecutorOpenPositionGrpcResponse{
@@ -154,6 +157,8 @@ message TradingExecutorClosedPositionGrpcModel{
     string CloseProcessId = 23;
     TradingExecutorClosePositionReason CloseReason = 24;
     repeated TradingExecutorSwapGrpcModel Swaps = 25;
+    optional double ReservedFundsForToppingUp = 26;
+    optional double ToppingUpPercent = 27;
 }
 
 message TradingExecutorClosePositionGrpcResponse{

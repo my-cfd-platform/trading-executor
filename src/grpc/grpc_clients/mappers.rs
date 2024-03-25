@@ -33,6 +33,7 @@ impl Into<TradingExecutorPendingPositionGrpcModel> for PositionManagerPendingPos
             tp_in_asset_price: self.tp_in_asset_price,
             sl_in_asset_price: self.sl_in_asset_price,
             desire_price: self.desire_price,
+            topping_up_percent: self.topping_up_percent,
         }
     }
 }
@@ -66,6 +67,8 @@ impl Into<TradingExecutorActivePositionGrpcModel> for PositionManagerActivePosit
             collateral: self.collateral,
             base_collateral_open_price: self.base_collateral_open_price,
             swaps: self.swaps.iter().map(|x| x.to_owned().into()).collect(),
+            reserved_funds_for_topping_up: self.reserved_fund_for_topping_up,
+            topping_up_percent: self.topping_up_percent,
         }
     }
 }
@@ -97,6 +100,8 @@ impl Into<TradingExecutorClosedPositionGrpcModel> for PositionManagerClosedPosit
             close_process_id: self.close_process_id,
             close_reason: self.close_reason,
             swaps: self.swaps.iter().map(|x| x.to_owned().into()).collect(),
+            reserved_funds_for_topping_up: self.reserved_fund_for_topping_up,
+            topping_up_percent: self.topping_up_percent,
         }
     }
 }
